@@ -1,0 +1,48 @@
+body {
+  margin: 0;
+  font-family: system-ui, sans-serif;
+  display: flex;
+  height: 100vh;
+  background: #f5f7fa;
+}
+header {
+  position: fixed;
+  top: 0;
+  left: 180px;
+  right: 0;
+  background: #fff;
+  padding: 1rem;
+  box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+}
+.logo {
+  height: 40px;
+  vertical-align: middle;
+  margin-right: 10px;
+}
+.sidebar {
+  background: #002b80;
+  color: white;
+  width: 180px;
+  padding-top: 80px;
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+}
+.menu-btn, #logoutBtn {
+  background: transparent;
+  border: none;
+  color: white;
+  padding: 1rem;
+  text-align: left;
+  cursor: pointer;
+  font-size: 1rem;
+}
+.menu-btn:hover, #logoutBtn:hover {
+  background: #0044cc;
+}
+main {
+  margin-left: 180px;
+  margin-top: 80px;
+  padding: 2rem;
+  flex: 1;
+}
