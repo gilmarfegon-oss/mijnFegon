@@ -74,23 +74,23 @@
   </div>
 
   <script type="module">
-    // 🔧 Firebase 9+ modulaire import
-import { auth } from "./scripts/firebase-init.js";
-import { 
-  signInWithEmailAndPassword,
-  createUserWithEmailAndPassword,
-  signInWithRedirect,
-  GoogleAuthProvider,
-  onAuthStateChanged,
-  setPersistence,
-  browserLocalPersistence
-} from "https://www.gstatic.com/firebasejs/11.0.1/firebase-auth.js";
+    import { auth } from "./scripts/firebase-init.js";
+    import {
+      signInWithEmailAndPassword,
+      createUserWithEmailAndPassword,
+      signInWithRedirect,
+      GoogleAuthProvider,
+      onAuthStateChanged,
+      setPersistence,
+      browserLocalPersistence
+    } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-auth.js";
 
-// 🔒 Blijf ingelogd (ook na refresh)
-await setPersistence(auth, browserLocalPersistence);
+    // 💾 zorg dat sessie behouden blijft
+    await setPersistence(auth, browserLocalPersistence);
 
-    const emailInput = document.getElementById("email");
-    const passwordInput = document.getElementById("password");
+    // form-elementen
+    const email = document.getElementById("email");
+    const pw = document.getElementById("password");
     const loginBtn = document.getElementById("loginBtn");
     const signupBtn = document.getElementById("signupBtn");
     const toggle = document.getElementById("toggle");
@@ -98,43 +98,48 @@ await setPersistence(auth, browserLocalPersistence);
     const googleBtn = document.getElementById("googleBtn");
 
     let isLogin = true;
-
-    toggle.addEventListener("click", (e) => {
+    toggle.addEventListener("click", e => {
       e.preventDefault();
       isLogin = !isLogin;
-      title.innerText = isLogin ? "Inloggen" : "Registreren";
+      title.textContent = isLogin ? "Inloggen" : "Registreren";
       loginBtn.style.display = isLogin ? "block" : "none";
       signupBtn.style.display = isLogin ? "none" : "block";
-      toggle.innerText = isLogin ? "Nog geen account? Registreer" : "Al een account? Log in";
+      toggle.textContent = isLogin ? "Nog geen account? Registreer" : "Al een account? Log in";
     });
 
+    // 📩 Email/wachtwoord inloggen of registreren
     loginBtn.onclick = async () => {
       try {
-        await signInWithEmailAndPassword(auth, emailInput.value, passwordInput.value);
+        await signInWithEmailAndPassword(auth, email.value, pw.value);
         window.location = "home.html";
       } catch (err) {
         alert(err.message);
       }
     };
-
     signupBtn.onclick = async () => {
       try {
-        await createUserWithEmailAndPassword(auth, emailInput.value, passwordInput.value);
+        await createUserWithEmailAndPassword(auth, email.value, pw.value);
         window.location = "home.html";
       } catch (err) {
         alert(err.message);
       }
     };
 
+    // 🔑 Google login via redirect (stabieler op GitHub Pages)
     googleBtn.onclick = async () => {
       const provider = new GoogleAuthProvider();
-      try {
-        await signInWithRedirect(auth, provider);
-        window.location = "home.html";
-      } catch (err) {
-        alert(err.message);
-      }
+      await signInWithRedirect(auth, provider);
     };
+
+    // 🔄 Direct doorsturen als gebruiker al ingelogd is
+    onAuthStateChanged(auth, (user) => {
+      if (user) {
+        console.log("✅ Gebruiker herkend:", user.email);
+        window.location = "home.html";
+      } else {
+        console.log("Nog niet ingelogd");
+      }
+    });
   </script>
 </body>
 </html>
