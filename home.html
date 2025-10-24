@@ -3,15 +3,47 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>MijnFegon Portaal — Debug</title>
-  <link rel="stylesheet" href="styles/main.css" />
+  <title>MijnFegon Dashboard</title>
   <style>
-    #loading {
+    body {
+      margin: 0;
       font-family: system-ui, sans-serif;
+      background: #f4f4f8;
+      display: flex;
+      height: 100vh;
+    }
+    aside {
+      background: #0d47a1;
+      color: white;
+      width: 220px;
+      display: flex;
+      flex-direction: column;
+      padding: 1rem;
+    }
+    aside h2 {
+      text-align: center;
+    }
+    main {
+      flex: 1;
+      padding: 2rem;
+    }
+    button {
+      background: #0066ff;
+      color: white;
+      border: none;
+      border-radius: 6px;
+      padding: 0.6rem 1rem;
+      cursor: pointer;
+    }
+    button:hover {
+      background: #004dd1;
+    }
+    #loading {
       display: flex;
       justify-content: center;
       align-items: center;
       height: 100vh;
+      width: 100%;
       font-size: 1.2rem;
       color: #333;
     }
@@ -21,139 +53,55 @@
   <div id="loading">Even geduld... je sessie wordt geladen ⏳</div>
 
   <div id="app" style="display:none;">
-    <div class="layout">
-      <aside class="sidebar">
-        <div class="brand">
-          <h2>MijnFegon</h2>
-        </div>
-        <nav id="menu">
-          <button class="nav-btn active" data-page="dashboard">📊 Dashboard</button>
-          <button class="nav-btn" data-page="instellingen">⚙️ Instellingen</button>
-          <button class="nav-btn" data-page="webshop">🛒 Webshop</button>
-        </nav>
-        <button id="logoutBtn" class="logout">🚪 Uitloggen</button>
-      </aside>
+    <aside>
+      <h2>MijnFegon</h2>
+      <nav>
+        <button class="nav" data-page="dashboard">📊 Dashboard</button>
+        <button class="nav" data-page="instellingen">⚙️ Instellingen</button>
+        <button class="nav" data-page="webshop">🛒 Webshop</button>
+      </nav>
+      <button id="logoutBtn">🚪 Uitloggen</button>
+    </aside>
 
-      <main class="content">
-        <header class="topbar">
-          <h1 id="pageTitle">Dashboard</h1>
-          <div class="user-info">
-            <span id="userName">Gebruiker</span>
-          </div>
-        </header>
-
-        <section id="pageContent"></section>
-      </main>
-    </div>
+    <main>
+      <h1 id="pageTitle">Dashboard</h1>
+      <div id="pageContent">
+        <p>Welkom bij jouw persoonlijke omgeving, <span id="userName"></span>!</p>
+      </div>
+    </main>
   </div>
 
   <script type="module">
-    // 🔧 Firebase imports
-    import { auth, db } from "./scripts/firebase-init.js";
+    import { auth } from "./scripts/firebase-init.js";
     import {
       onAuthStateChanged,
-      signOut,
+      signOut
     } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-auth.js";
-    import {
-      collection,
-      getDocs,
-      updateDoc,
-      doc,
-    } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-firestore.js";
-
-    console.log("Firebase object:", auth);
-    console.log("Firebase geladen — wacht op user...");
 
     const loading = document.getElementById("loading");
     const app = document.getElementById("app");
-    const pageTitle = document.getElementById("pageTitle");
-    const pageContent = document.getElementById("pageContent");
+    const userName = document.getElementById("userName");
     const logoutBtn = document.getElementById("logoutBtn");
-    const menu = document.getElementById("menu");
 
-    const pages = {
-      dashboard: `<h2>Dashboard</h2><p>Welkom bij MijnFegon.</p>`,
-      instellingen: `<h2>Instellingen</h2><p>Je kunt hier straks je profiel aanpassen.</p>`,
-      webshop: `<h2>Webshop</h2><p>Wordt binnenkort toegevoegd.</p>`,
-      admin: `<h2>🧑‍💼 Gebruikersbeheer</h2><div id="usersList">Laden...</div>`
-    };
-
-    // 🔒 Auth-check
     onAuthStateChanged(auth, async (user) => {
-      console.log("onAuthStateChanged triggered:", user);
-
-      // wacht kort voor sessieherstel
-      await new Promise(res => setTimeout(res, 600));
+      await new Promise(r => setTimeout(r, 500));
 
       if (!user) {
-        console.warn("Geen gebruiker gevonden – redirect over 1s");
+        console.warn("Geen gebruiker – redirect naar login...");
         setTimeout(() => (window.location = "index.html"), 1000);
         return;
       }
 
       console.log("✅ Ingelogd als:", user.email);
-
       loading.style.display = "none";
-      app.style.display = "block";
-      document.getElementById("userName").textContent =
-        user.displayName || user.email;
-
-      const token = await user.getIdTokenResult(true);
-      const isAdmin = token.claims.admin === true;
-      console.log("Gebruiker is admin:", isAdmin);
-
-      initApp(isAdmin);
+      app.style.display = "flex";
+      userName.textContent = user.displayName || user.email;
     });
 
-    function initApp(isAdmin) {
-      if (isAdmin) {
-        const adminBtn = document.createElement("button");
-        adminBtn.className = "nav-btn";
-        adminBtn.dataset.page = "admin";
-        adminBtn.textContent = "🧑‍💼 Gebruikersbeheer";
-        menu.appendChild(adminBtn);
-      }
-
-      const navButtons = document.querySelectorAll(".nav-btn");
-
-      function loadPage(name) {
-        navButtons.forEach(btn => btn.classList.remove("active"));
-        const activeBtn = document.querySelector(`[data-page="${name}"]`);
-        if (activeBtn) activeBtn.classList.add("active");
-        pageTitle.textContent = name.charAt(0).toUpperCase() + name.slice(1);
-        pageContent.innerHTML = pages[name];
-        if (name === "admin" && isAdmin) loadAdminUsers();
-      }
-
-      navButtons.forEach(btn => {
-        btn.addEventListener("click", () => {
-          const page = btn.getAttribute("data-page");
-          loadPage(page);
-        });
-      });
-
-      logoutBtn.addEventListener("click", () => signOut(auth));
-      loadPage("dashboard");
-    }
-
-    async function loadAdminUsers() {
-      const usersSnap = await getDocs(collection(db, "users"));
-      const list = document.getElementById("usersList");
-      if (usersSnap.empty) {
-        list.innerHTML = "<p>Geen gebruikers gevonden.</p>";
-        return;
-      }
-
-      list.innerHTML = "";
-      usersSnap.forEach((docSnap) => {
-        const u = docSnap.data();
-        const container = document.createElement("div");
-        container.innerHTML = `
-          <p><strong>${u.email}</strong><br>Rol: <span>${u.role}</span></p>
-        `;
-        list.appendChild(container);
-      });
-    }
+    logoutBtn.onclick = async () => {
+      await signOut(auth);
+      window.location = "index.html";
+    };
   </script>
 </body>
 </html>
