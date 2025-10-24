@@ -75,27 +75,19 @@
 
   <script type="module">
     // 🔧 Firebase 9+ modulaire import
-    import { initializeApp } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-app.js";
-    import { 
-      getAuth, 
-      signInWithEmailAndPassword,
-      createUserWithEmailAndPassword,
-      signInWithPopup,
-      GoogleAuthProvider,
-      onAuthStateChanged
-    } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-auth.js";
+import { auth } from "./scripts/firebase-init.js";
+import { 
+  signInWithEmailAndPassword,
+  createUserWithEmailAndPassword,
+  signInWithRedirect,
+  GoogleAuthProvider,
+  onAuthStateChanged,
+  setPersistence,
+  browserLocalPersistence
+} from "https://www.gstatic.com/firebasejs/11.0.1/firebase-auth.js";
 
-    // 🔧 Firebase-config (vervang met jouw eigen gegevens!)
-    const firebaseConfig = {
-      apiKey: "AIzaSyAjxmYzmbSbfUneXaxEKmewWoSfwF8Ld30",
-      authDomain: "mijnfegon.firebaseapp.com",
-      projectId: "mijnfegon",
-      storageBucket: "mijnfegon.appspot.com", // extra toegevoegd voor verificatie.
-      appId: "1:415529097955:web:da03af79ae2888a58a83d6"
-    };
-
-    const app = initializeApp(firebaseConfig);
-    const auth = getAuth(app);
+// 🔒 Blijf ingelogd (ook na refresh)
+await setPersistence(auth, browserLocalPersistence);
 
     const emailInput = document.getElementById("email");
     const passwordInput = document.getElementById("password");
@@ -137,7 +129,7 @@
     googleBtn.onclick = async () => {
       const provider = new GoogleAuthProvider();
       try {
-        await signInWithPopup(auth, provider);
+        await signInWithRedirect(auth, provider);
         window.location = "home.html";
       } catch (err) {
         alert(err.message);
