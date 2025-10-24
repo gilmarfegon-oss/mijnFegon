@@ -1,70 +1,112 @@
 <!DOCTYPE html>
 <html lang="nl">
 <head>
-  <meta charset="UTF-8">
-  <title>MijnFegon Dashboard</title>
-  <link rel="stylesheet" href="styles/main.css">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>MijnFegon Portaal</title>
+  <link rel="stylesheet" href="styles/main.css" />
 </head>
 <body>
-  <header>
-    <img src="img/logo.png" alt="MijnFegon" class="logo">
-    <h1>Welkom <span id="userName"></span></h1>
-  </header>
+  <div class="layout">
+    <aside class="sidebar">
+      <div class="brand">
+        <img src="img/logo.png" alt="Logo" class="logo" />
+        <h2>MijnFegon</h2>
+      </div>
+      <nav>
+        <button class="nav-btn active" data-page="dashboard">📊 Dashboard</button>
+        <button class="nav-btn" data-page="instellingen">⚙️ Instellingen</button>
+        <button class="nav-btn" data-page="webshop">🛒 Webshop</button>
+      </nav>
+      <button id="logoutBtn" class="logout">🚪 Uitloggen</button>
+    </aside>
 
-  <nav class="sidebar">
-    <button class="menu-btn" data-page="dashboard">📊 Dashboard</button>
-    <button class="menu-btn" data-page="instellingen">⚙️ Instellingen</button>
-    <button class="menu-btn" data-page="webshop">🛒 Webshop</button>
-    <button id="logoutBtn">🚪 Uitloggen</button>
-  </nav>
+    <main class="content">
+      <header class="topbar">
+        <h1 id="pageTitle">Dashboard</h1>
+        <div class="user-info">
+          <span id="userName">Gebruiker</span>
+        </div>
+      </header>
 
-  <main id="content">
-    <!-- hier komt dynamische content -->
-  </main>
+      <section id="pageContent">
+        <!-- dynamische inhoud -->
+      </section>
+    </main>
+  </div>
 
   <script type="module">
     import { checkAuth, logout } from "./scripts/auth.js";
 
+    // Controleer loginstatus
     checkAuth();
 
-    const content = document.getElementById("content");
-    const menuButtons = document.querySelectorAll(".menu-btn");
+    // HTML-elementen
+    const navButtons = document.querySelectorAll(".nav-btn");
+    const pageTitle = document.getElementById("pageTitle");
+    const pageContent = document.getElementById("pageContent");
+    const logoutBtn = document.getElementById("logoutBtn");
 
+    // Pagina’s (content templates)
     const pages = {
       dashboard: `
-        <h2>📊 Dashboard</h2>
-        <ul>
-          <li><strong>Punten beschikbaar:</strong> 120</li>
-          <li><strong>Punten in afwachting:</strong> 30</li>
-          <li><strong>Aangemelde klanten:</strong> 14</li>
-        </ul>
+        <div class="dashboard">
+          <h2>📈 Overzicht</h2>
+          <div class="stats">
+            <div class="card"><h3>Punten beschikbaar</h3><p>120</p></div>
+            <div class="card"><h3>Punten in afwachting</h3><p>30</p></div>
+            <div class="card"><h3>Aangemelde klanten</h3><p>14</p></div>
+          </div>
+        </div>
       `,
       instellingen: `
-        <h2>⚙️ Instellingen</h2>
-        <form id="settingsForm">
-          <label>Bedrijfsnaam<br><input type="text" name="bedrijf" placeholder="Mijn Bedrijf BV"></label><br><br>
-          <label>Adres<br><input type="text" name="adres" placeholder="Straatnaam 123"></label><br><br>
-          <label>Email<br><input type="email" name="email" placeholder="email@voorbeeld.nl"></label><br><br>
-          <button type="submit">Opslaan</button>
-        </form>
-        <h3>Wachtwoord wijzigen</h3>
-        <button id="changePw">Stel nieuw wachtwoord in</button>
+        <div class="instellingen">
+          <h2>⚙️ Bedrijfsinstellingen</h2>
+          <form id="settingsForm">
+            <label>Bedrijfsnaam</label>
+            <input type="text" name="bedrijf" placeholder="Mijn Bedrijf BV" />
+            
+            <label>Adres</label>
+            <input type="text" name="adres" placeholder="Straatnaam 123" />
+
+            <label>Email</label>
+            <input type="email" name="email" placeholder="email@voorbeeld.nl" />
+
+            <button type="submit">Opslaan</button>
+          </form>
+          <h3>🔑 Wachtwoord wijzigen</h3>
+          <button id="changePw">Nieuw wachtwoord instellen</button>
+        </div>
       `,
       webshop: `
-        <h2>🛒 Webshop (in ontwikkeling)</h2>
-        <p>Deze sectie wordt binnenkort toegevoegd.</p>
+        <div class="webshop">
+          <h2>🛒 Webshop</h2>
+          <p>De webshop wordt binnenkort toegevoegd.</p>
+        </div>
       `
     };
 
-    menuButtons.forEach(btn => {
+    // Functie: Pagina laden
+    function loadPage(name) {
+      navButtons.forEach(btn => btn.classList.remove("active"));
+      document.querySelector(`[data-page="${name}"]`).classList.add("active");
+      pageTitle.textContent = name.charAt(0).toUpperCase() + name.slice(1);
+      pageContent.innerHTML = pages[name];
+    }
+
+    // Navigatie
+    navButtons.forEach(btn => {
       btn.addEventListener("click", () => {
         const page = btn.getAttribute("data-page");
-        content.innerHTML = pages[page];
+        loadPage(page);
       });
     });
 
-    document.getElementById("logoutBtn").addEventListener("click", logout);
-    content.innerHTML = pages.dashboard; // standaard openen
+    // Logout
+    logoutBtn.addEventListener("click", logout);
+
+    // Startpagina
+    loadPage("dashboard");
   </script>
 </body>
 </html>
