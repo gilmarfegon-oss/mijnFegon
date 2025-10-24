@@ -1,12 +1,136 @@
 <!DOCTYPE html>
 <html lang="nl">
 <head>
-  <meta charset="UTF-8">
-  <title>Mijn eerste site</title>
-  <link rel="stylesheet" href="style.css">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Login | MijnFegon</title>
+  <script src="https://www.gstatic.com/firebasejs/11.0.1/firebase-app.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/11.0.1/firebase-auth.js"></script>
+  <style>
+    body {
+      font-family: system-ui, sans-serif;
+      background: #f4f4f8;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+      margin: 0;
+    }
+    .container {
+      background: white;
+      padding: 2rem;
+      border-radius: 12px;
+      box-shadow: 0 0 12px rgba(0,0,0,0.1);
+      width: 300px;
+    }
+    h2 { text-align: center; margin-bottom: 1rem; }
+    input {
+      width: 100%;
+      padding: 0.6rem;
+      margin-bottom: 0.8rem;
+      border: 1px solid #ccc;
+      border-radius: 6px;
+    }
+    button {
+      width: 100%;
+      padding: 0.6rem;
+      border: none;
+      border-radius: 6px;
+      background: #0066ff;
+      color: white;
+      font-weight: bold;
+      cursor: pointer;
+    }
+    button:hover { background: #004dd1; }
+    .google-btn {
+      background: #fff;
+      color: #444;
+      border: 1px solid #ccc;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+    }
+    .switch {
+      text-align: center;
+      margin-top: 1rem;
+      font-size: 0.9em;
+    }
+  </style>
 </head>
 <body>
-  <h1>Hallo wereld!</h1>
-  <p>Dit is mijn eerste website via GitHub Desktop 🚀</p>
+  <div class="container">
+    <h2 id="title">Inloggen</h2>
+    <input type="email" id="email" placeholder="E-mail" />
+    <input type="password" id="password" placeholder="Wachtwoord" />
+    <button id="loginBtn">Log in</button>
+    <button id="signupBtn" style="display:none;">Registreer</button>
+    <button class="google-btn" id="googleBtn">
+      <img src="https://developers.google.com/identity/images/g-logo.png" width="18"/> 
+      Log in met Google
+    </button>
+    <div class="switch">
+      <a href="#" id="toggle">Nog geen account? Registreer</a>
+    </div>
+  </div>
+
+  <script>
+    // 🔧 Firebase-configuratie (vervang dit met jouw gegevens!)
+    const firebaseConfig = {
+      apiKey: "JOUW_API_KEY",
+      authDomain: "mijnfegon.firebaseapp.com",
+      projectId: "mijnfegon",
+      appId: "JOUW_APP_ID"
+    };
+    const app = firebase.initializeApp(firebaseConfig);
+    const auth = firebase.auth();
+
+    const emailInput = document.getElementById("email");
+    const passwordInput = document.getElementById("password");
+    const loginBtn = document.getElementById("loginBtn");
+    const signupBtn = document.getElementById("signupBtn");
+    const toggle = document.getElementById("toggle");
+    const title = document.getElementById("title");
+    const googleBtn = document.getElementById("googleBtn");
+
+    let isLogin = true;
+
+    toggle.addEventListener("click", (e) => {
+      e.preventDefault();
+      isLogin = !isLogin;
+      title.innerText = isLogin ? "Inloggen" : "Registreren";
+      loginBtn.style.display = isLogin ? "block" : "none";
+      signupBtn.style.display = isLogin ? "none" : "block";
+      toggle.innerText = isLogin ? "Nog geen account? Registreer" : "Al een account? Log in";
+    });
+
+    loginBtn.onclick = async () => {
+      try {
+        await auth.signInWithEmailAndPassword(emailInput.value, passwordInput.value);
+        window.location = "home.html";
+      } catch (err) {
+        alert(err.message);
+      }
+    };
+
+    signupBtn.onclick = async () => {
+      try {
+        await auth.createUserWithEmailAndPassword(emailInput.value, passwordInput.value);
+        window.location = "home.html";
+      } catch (err) {
+        alert(err.message);
+      }
+    };
+
+    googleBtn.onclick = async () => {
+      const provider = new firebase.auth.GoogleAuthProvider();
+      try {
+        await auth.signInWithPopup(provider);
+        window.location = "home.html";
+      } catch (err) {
+        alert(err.message);
+      }
+    };
+  </script>
 </body>
 </html>
