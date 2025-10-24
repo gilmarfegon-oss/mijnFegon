@@ -20,10 +20,8 @@
 <body>
   <!-- 🔄 Laadscherm -->
   <div id="loading">Even geduld... je sessie wordt geladen ⏳</div>
-<div id="app" style="display:none;">
-</div>
 
-  <!-- 🌐 Hoofdapplicatie -->
+  <!-- 🌐 Applicatie -->
   <div id="app" style="display:none;">
     <div class="layout">
       <aside class="sidebar">
@@ -53,7 +51,6 @@
   </div>
 
   <script type="module">
-    // 🔧 Firebase imports
     import { auth, db } from "./scripts/firebase-init.js";
     import {
       onAuthStateChanged,
@@ -66,7 +63,14 @@
       doc,
     } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-firestore.js";
 
-    // 🧭 Pagina templates
+    const loading = document.getElementById("loading");
+    const app = document.getElementById("app");
+    const pageTitle = document.getElementById("pageTitle");
+    const pageContent = document.getElementById("pageContent");
+    const logoutBtn = document.getElementById("logoutBtn");
+    const menu = document.getElementById("menu");
+
+    // Pagina templates
     const pages = {
       dashboard: `
         <div class="dashboard">
@@ -109,38 +113,34 @@
       `,
     };
 
-    const pageTitle = document.getElementById("pageTitle");
-    const pageContent = document.getElementById("pageContent");
-    const logoutBtn = document.getElementById("logoutBtn");
-    const menu = document.getElementById("menu");
-    const loading = document.getElementById("loading");
-    const app = document.getElementById("app");
-
-    // 🔒 Auth listener (wacht tot Firebase klaar is)
+    // 🔒 Auth-check met wachtfase
     onAuthStateChanged(auth, async (user) => {
+      // wacht kort zodat Firebase sessie kan herstellen
+      await new Promise(res => setTimeout(res, 600));
+
       if (!user) {
-        console.warn("Geen ingelogde gebruiker, redirect in 800ms...");
-        setTimeout(() => (window.location = "index.html"), 800);
+        console.warn("Geen gebruiker gevonden – redirect over 1s");
+        setTimeout(() => (window.location = "index.html"), 1000);
         return;
       }
 
-      // ✅ Firebase is klaar → toon app
+      console.log("✅ Ingelogd als:", user.email);
+
+      // verberg laadscherm, toon app
       loading.style.display = "none";
       app.style.display = "block";
-
       document.getElementById("userName").textContent =
         user.displayName || user.email;
 
-      // 🔎 Haal custom claims op
+      // Haal custom claims op
       const token = await user.getIdTokenResult(true);
       const isAdmin = token.claims.admin === true;
-
       console.log("Gebruiker is admin:", isAdmin);
 
       initApp(isAdmin);
     });
 
-    // 🧩 Initialiseer UI
+    // UI-initialisatie
     function initApp(isAdmin) {
       if (isAdmin) {
         const adminBtn = document.createElement("button");
@@ -153,16 +153,17 @@
       const navButtons = document.querySelectorAll(".nav-btn");
 
       function loadPage(name) {
-        navButtons.forEach((btn) => btn.classList.remove("active"));
+        navButtons.forEach(btn => btn.classList.remove("active"));
         const activeBtn = document.querySelector(`[data-page="${name}"]`);
         if (activeBtn) activeBtn.classList.add("active");
+
         pageTitle.textContent =
           name.charAt(0).toUpperCase() + name.slice(1);
         pageContent.innerHTML = pages[name];
         if (name === "admin" && isAdmin) loadAdminUsers();
       }
 
-      navButtons.forEach((btn) => {
+      navButtons.forEach(btn => {
         btn.addEventListener("click", () => {
           const page = btn.getAttribute("data-page");
           loadPage(page);
@@ -196,6 +197,7 @@
           </select>
           <button>Opslaan</button>
         `;
+
         const select = container.querySelector("select");
         const saveBtn = container.querySelector("button");
 
