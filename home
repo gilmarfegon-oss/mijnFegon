@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+  <meta charset="UTF-8">
+  <title>MijnFegon</title>
+  <script src="https://www.gstatic.com/firebasejs/11.0.1/firebase-app.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/11.0.1/firebase-auth.js"></script>
+</head>
+<body>
+  <h1>Welkom bij MijnFegon 🚀</h1>
+  <button id="logout">Uitloggen</button>
+
+  <script>
+    const firebaseConfig = {
+      apiKey: "JOUW_API_KEY",
+      authDomain: "mijnfegon.firebaseapp.com",
+      projectId: "mijnfegon",
+      appId: "JOUW_APP_ID"
+    };
+    const app = firebase.initializeApp(firebaseConfig);
+    const auth = firebase.auth();
+
+    auth.onAuthStateChanged((user) => {
+      if (!user) {
+        // Niet ingelogd → terug naar login
+        window.location = "index.html";
+      }
+    });
+
+    document.getElementById("logout").onclick = () => {
+      auth.signOut();
+    };
+  </script>
+</body>
+</html>
