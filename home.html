@@ -5,34 +5,49 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>MijnFegon Portaal</title>
   <link rel="stylesheet" href="styles/main.css" />
+  <style>
+    #loading {
+      font-family: system-ui, sans-serif;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+      font-size: 1.2rem;
+      color: #333;
+    }
+  </style>
 </head>
 <body>
-  <div class="layout">
-    <aside class="sidebar">
-      <div class="brand">
-        <img src="img/logo.png" alt="Logo" class="logo" />
-        <h2>MijnFegon</h2>
-      </div>
-      <nav id="menu">
-        <button class="nav-btn active" data-page="dashboard">📊 Dashboard</button>
-        <button class="nav-btn" data-page="instellingen">⚙️ Instellingen</button>
-        <button class="nav-btn" data-page="webshop">🛒 Webshop</button>
-      </nav>
-      <button id="logoutBtn" class="logout">🚪 Uitloggen</button>
-    </aside>
+  <!-- 🔄 Laadscherm -->
+  <div id="loading">Even geduld... je sessie wordt geladen ⏳</div>
 
-    <main class="content">
-      <header class="topbar">
-        <h1 id="pageTitle">Dashboard</h1>
-        <div class="user-info">
-          <span id="userName">Gebruiker</span>
+  <!-- 🌐 Hoofdapplicatie -->
+  <div id="app" style="display:none;">
+    <div class="layout">
+      <aside class="sidebar">
+        <div class="brand">
+          <img src="img/logo.png" alt="Logo" class="logo" />
+          <h2>MijnFegon</h2>
         </div>
-      </header>
+        <nav id="menu">
+          <button class="nav-btn active" data-page="dashboard">📊 Dashboard</button>
+          <button class="nav-btn" data-page="instellingen">⚙️ Instellingen</button>
+          <button class="nav-btn" data-page="webshop">🛒 Webshop</button>
+        </nav>
+        <button id="logoutBtn" class="logout">🚪 Uitloggen</button>
+      </aside>
 
-      <section id="pageContent">
-        <!-- dynamische inhoud -->
-      </section>
-    </main>
+      <main class="content">
+        <header class="topbar">
+          <h1 id="pageTitle">Dashboard</h1>
+          <div class="user-info">
+            <span id="userName">Gebruiker</span>
+          </div>
+        </header>
+
+        <section id="pageContent"></section>
+      </main>
+    </div>
   </div>
 
   <script type="module">
@@ -40,39 +55,14 @@
     import { auth, db } from "./scripts/firebase-init.js";
     import {
       onAuthStateChanged,
-      signOut
+      signOut,
     } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-auth.js";
     import {
-      doc,
-      getDoc,
       collection,
       getDocs,
-      updateDoc
+      updateDoc,
+      doc,
     } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-firestore.js";
-
-    // HTML-elementen
-    const pageTitle = document.getElementById("pageTitle");
-    const pageContent = document.getElementById("pageContent");
-    const logoutBtn = document.getElementById("logoutBtn");
-    const menu = document.getElementById("menu");
-
-    // 🔐 Controleer login en rol
-    onAuthStateChanged(auth, async (user) => {
-      if (!user) {
-        window.location = "index.html";
-        return;
-      }
-
-      document.getElementById("userName").textContent =
-        user.displayName || user.email;
-
-      // Haal rol op uit Firestore
-      const userRef = doc(db, "users", user.uid);
-      const userSnap = await getDoc(userRef);
-      const role = userSnap.exists() ? userSnap.data().role : "user";
-
-      initApp(role);
-    });
 
     // 🧭 Pagina templates
     const pages = {
@@ -92,13 +82,10 @@
           <form id="settingsForm">
             <label>Bedrijfsnaam</label>
             <input type="text" name="bedrijf" placeholder="Mijn Bedrijf BV" />
-            
             <label>Adres</label>
             <input type="text" name="adres" placeholder="Straatnaam 123" />
-
             <label>Email</label>
             <input type="email" name="email" placeholder="email@voorbeeld.nl" />
-
             <button type="submit">Opslaan</button>
           </form>
           <h3>🔑 Wachtwoord wijzigen</h3>
@@ -117,12 +104,43 @@
           <p>Hier kun je alle gebruikers bekijken en rollen aanpassen.</p>
           <div id="usersList">Laden...</div>
         </div>
-      `
+      `,
     };
 
-    // 🧩 Initialiseer app afhankelijk van rol
-    function initApp(role) {
-      if (role === "admin") {
+    const pageTitle = document.getElementById("pageTitle");
+    const pageContent = document.getElementById("pageContent");
+    const logoutBtn = document.getElementById("logoutBtn");
+    const menu = document.getElementById("menu");
+    const loading = document.getElementById("loading");
+    const app = document.getElementById("app");
+
+    // 🔒 Auth listener (wacht tot Firebase klaar is)
+    onAuthStateChanged(auth, async (user) => {
+      if (!user) {
+        console.warn("Geen ingelogde gebruiker, redirect in 800ms...");
+        setTimeout(() => (window.location = "index.html"), 800);
+        return;
+      }
+
+      // ✅ Firebase is klaar → toon app
+      loading.style.display = "none";
+      app.style.display = "block";
+
+      document.getElementById("userName").textContent =
+        user.displayName || user.email;
+
+      // 🔎 Haal custom claims op
+      const token = await user.getIdTokenResult(true);
+      const isAdmin = token.claims.admin === true;
+
+      console.log("Gebruiker is admin:", isAdmin);
+
+      initApp(isAdmin);
+    });
+
+    // 🧩 Initialiseer UI
+    function initApp(isAdmin) {
+      if (isAdmin) {
         const adminBtn = document.createElement("button");
         adminBtn.className = "nav-btn";
         adminBtn.dataset.page = "admin";
@@ -136,12 +154,10 @@
         navButtons.forEach((btn) => btn.classList.remove("active"));
         const activeBtn = document.querySelector(`[data-page="${name}"]`);
         if (activeBtn) activeBtn.classList.add("active");
-
         pageTitle.textContent =
           name.charAt(0).toUpperCase() + name.slice(1);
         pageContent.innerHTML = pages[name];
-
-        if (name === "admin") loadAdminUsers();
+        if (name === "admin" && isAdmin) loadAdminUsers();
       }
 
       navButtons.forEach((btn) => {
@@ -152,11 +168,10 @@
       });
 
       logoutBtn.addEventListener("click", () => signOut(auth));
-
       loadPage("dashboard");
     }
 
-    // 👥 Admin: gebruikers ophalen en tonen
+    // 👥 Admin: gebruikers tonen
     async function loadAdminUsers() {
       const usersSnap = await getDocs(collection(db, "users"));
       const list = document.getElementById("usersList");
@@ -179,7 +194,6 @@
           </select>
           <button>Opslaan</button>
         `;
-
         const select = container.querySelector("select");
         const saveBtn = container.querySelector("button");
 
