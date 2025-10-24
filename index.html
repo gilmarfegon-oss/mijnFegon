@@ -85,10 +85,9 @@
       browserLocalPersistence
     } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-auth.js";
 
-    // 💾 zorg dat sessie behouden blijft
+    // 🔒 Blijf ingelogd
     await setPersistence(auth, browserLocalPersistence);
 
-    // form-elementen
     const email = document.getElementById("email");
     const pw = document.getElementById("password");
     const loginBtn = document.getElementById("loginBtn");
@@ -107,7 +106,6 @@
       toggle.textContent = isLogin ? "Nog geen account? Registreer" : "Al een account? Log in";
     });
 
-    // 📩 Email/wachtwoord inloggen of registreren
     loginBtn.onclick = async () => {
       try {
         await signInWithEmailAndPassword(auth, email.value, pw.value);
@@ -116,6 +114,7 @@
         alert(err.message);
       }
     };
+
     signupBtn.onclick = async () => {
       try {
         await createUserWithEmailAndPassword(auth, email.value, pw.value);
@@ -125,19 +124,17 @@
       }
     };
 
-    // 🔑 Google login via redirect (stabieler op GitHub Pages)
+    // Google inlog (redirect = stabieler op GitHub Pages)
     googleBtn.onclick = async () => {
       const provider = new GoogleAuthProvider();
       await signInWithRedirect(auth, provider);
     };
 
-    // 🔄 Direct doorsturen als gebruiker al ingelogd is
+    // Gebruiker al ingelogd? → direct doorsturen
     onAuthStateChanged(auth, (user) => {
       if (user) {
         console.log("✅ Gebruiker herkend:", user.email);
         window.location = "home.html";
-      } else {
-        console.log("Nog niet ingelogd");
       }
     });
   </script>
