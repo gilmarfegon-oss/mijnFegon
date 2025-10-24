@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>MijnFegon Portaal</title>
+  <title>MijnFegon Portaal — Debug</title>
   <link rel="stylesheet" href="styles/main.css" />
   <style>
     #loading {
@@ -18,15 +18,12 @@
   </style>
 </head>
 <body>
-  <!-- 🔄 Laadscherm -->
   <div id="loading">Even geduld... je sessie wordt geladen ⏳</div>
 
-  <!-- 🌐 Applicatie -->
   <div id="app" style="display:none;">
     <div class="layout">
       <aside class="sidebar">
         <div class="brand">
-          <img src="img/logo.png" alt="Logo" class="logo" />
           <h2>MijnFegon</h2>
         </div>
         <nav id="menu">
@@ -51,6 +48,7 @@
   </div>
 
   <script type="module">
+    // 🔧 Firebase imports
     import { auth, db } from "./scripts/firebase-init.js";
     import {
       onAuthStateChanged,
@@ -63,6 +61,9 @@
       doc,
     } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-firestore.js";
 
+    console.log("Firebase object:", auth);
+    console.log("Firebase geladen — wacht op user...");
+
     const loading = document.getElementById("loading");
     const app = document.getElementById("app");
     const pageTitle = document.getElementById("pageTitle");
@@ -70,52 +71,18 @@
     const logoutBtn = document.getElementById("logoutBtn");
     const menu = document.getElementById("menu");
 
-    // Pagina templates
     const pages = {
-      dashboard: `
-        <div class="dashboard">
-          <h2>📈 Overzicht</h2>
-          <div class="stats">
-            <div class="card"><h3>Punten beschikbaar</h3><p>120</p></div>
-            <div class="card"><h3>Punten in afwachting</h3><p>30</p></div>
-            <div class="card"><h3>Aangemelde klanten</h3><p>14</p></div>
-          </div>
-        </div>
-      `,
-      instellingen: `
-        <div class="instellingen">
-          <h2>⚙️ Bedrijfsinstellingen</h2>
-          <form id="settingsForm">
-            <label>Bedrijfsnaam</label>
-            <input type="text" name="bedrijf" placeholder="Mijn Bedrijf BV" />
-            <label>Adres</label>
-            <input type="text" name="adres" placeholder="Straatnaam 123" />
-            <label>Email</label>
-            <input type="email" name="email" placeholder="email@voorbeeld.nl" />
-            <button type="submit">Opslaan</button>
-          </form>
-          <h3>🔑 Wachtwoord wijzigen</h3>
-          <button id="changePw">Nieuw wachtwoord instellen</button>
-        </div>
-      `,
-      webshop: `
-        <div class="webshop">
-          <h2>🛒 Webshop</h2>
-          <p>De webshop wordt binnenkort toegevoegd.</p>
-        </div>
-      `,
-      admin: `
-        <div class="admin">
-          <h2>🧑‍💼 Gebruikersbeheer</h2>
-          <p>Hier kun je alle gebruikers bekijken en rollen aanpassen.</p>
-          <div id="usersList">Laden...</div>
-        </div>
-      `,
+      dashboard: `<h2>Dashboard</h2><p>Welkom bij MijnFegon.</p>`,
+      instellingen: `<h2>Instellingen</h2><p>Je kunt hier straks je profiel aanpassen.</p>`,
+      webshop: `<h2>Webshop</h2><p>Wordt binnenkort toegevoegd.</p>`,
+      admin: `<h2>🧑‍💼 Gebruikersbeheer</h2><div id="usersList">Laden...</div>`
     };
 
-    // 🔒 Auth-check met wachtfase
+    // 🔒 Auth-check
     onAuthStateChanged(auth, async (user) => {
-      // wacht kort zodat Firebase sessie kan herstellen
+      console.log("onAuthStateChanged triggered:", user);
+
+      // wacht kort voor sessieherstel
       await new Promise(res => setTimeout(res, 600));
 
       if (!user) {
@@ -126,13 +93,11 @@
 
       console.log("✅ Ingelogd als:", user.email);
 
-      // verberg laadscherm, toon app
       loading.style.display = "none";
       app.style.display = "block";
       document.getElementById("userName").textContent =
         user.displayName || user.email;
 
-      // Haal custom claims op
       const token = await user.getIdTokenResult(true);
       const isAdmin = token.claims.admin === true;
       console.log("Gebruiker is admin:", isAdmin);
@@ -140,7 +105,6 @@
       initApp(isAdmin);
     });
 
-    // UI-initialisatie
     function initApp(isAdmin) {
       if (isAdmin) {
         const adminBtn = document.createElement("button");
@@ -156,9 +120,7 @@
         navButtons.forEach(btn => btn.classList.remove("active"));
         const activeBtn = document.querySelector(`[data-page="${name}"]`);
         if (activeBtn) activeBtn.classList.add("active");
-
-        pageTitle.textContent =
-          name.charAt(0).toUpperCase() + name.slice(1);
+        pageTitle.textContent = name.charAt(0).toUpperCase() + name.slice(1);
         pageContent.innerHTML = pages[name];
         if (name === "admin" && isAdmin) loadAdminUsers();
       }
@@ -174,11 +136,9 @@
       loadPage("dashboard");
     }
 
-    // 👥 Admin: gebruikers tonen
     async function loadAdminUsers() {
       const usersSnap = await getDocs(collection(db, "users"));
       const list = document.getElementById("usersList");
-
       if (usersSnap.empty) {
         list.innerHTML = "<p>Geen gebruikers gevonden.</p>";
         return;
@@ -188,26 +148,9 @@
       usersSnap.forEach((docSnap) => {
         const u = docSnap.data();
         const container = document.createElement("div");
-        container.classList.add("user-card");
         container.innerHTML = `
           <p><strong>${u.email}</strong><br>Rol: <span>${u.role}</span></p>
-          <select>
-            <option value="user" ${u.role === "user" ? "selected" : ""}>user</option>
-            <option value="admin" ${u.role === "admin" ? "selected" : ""}>admin</option>
-          </select>
-          <button>Opslaan</button>
         `;
-
-        const select = container.querySelector("select");
-        const saveBtn = container.querySelector("button");
-
-        saveBtn.addEventListener("click", async () => {
-          await updateDoc(doc(db, "users", docSnap.id), {
-            role: select.value,
-          });
-          alert(`${u.email} is nu ${select.value}`);
-        });
-
         list.appendChild(container);
       });
     }
