@@ -4,8 +4,6 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Login | MijnFegon</title>
-  <script src="https://www.gstatic.com/firebasejs/11.0.1/firebase-app.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/11.0.1/firebase-auth.js"></script>
   <style>
     body {
       font-family: system-ui, sans-serif;
@@ -50,6 +48,7 @@
       align-items: center;
       justify-content: center;
       gap: 8px;
+      margin-top: 0.5rem;
     }
     .switch {
       text-align: center;
@@ -74,16 +73,28 @@
     </div>
   </div>
 
-  <script>
-    // 🔧 Firebase-configuratie (vervang dit met jouw gegevens!)
+  <script type="module">
+    // 🔧 Firebase 9+ modulaire import
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-app.js";
+    import { 
+      getAuth, 
+      signInWithEmailAndPassword,
+      createUserWithEmailAndPassword,
+      signInWithPopup,
+      GoogleAuthProvider,
+      onAuthStateChanged
+    } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-auth.js";
+
+    // 🔧 Firebase-config (vervang met jouw eigen gegevens!)
     const firebaseConfig = {
       apiKey: "JOUW_API_KEY",
       authDomain: "mijnfegon.firebaseapp.com",
       projectId: "mijnfegon",
       appId: "JOUW_APP_ID"
     };
-    const app = firebase.initializeApp(firebaseConfig);
-    const auth = firebase.auth();
+
+    const app = initializeApp(firebaseConfig);
+    const auth = getAuth(app);
 
     const emailInput = document.getElementById("email");
     const passwordInput = document.getElementById("password");
@@ -106,7 +117,7 @@
 
     loginBtn.onclick = async () => {
       try {
-        await auth.signInWithEmailAndPassword(emailInput.value, passwordInput.value);
+        await signInWithEmailAndPassword(auth, emailInput.value, passwordInput.value);
         window.location = "home.html";
       } catch (err) {
         alert(err.message);
@@ -115,7 +126,7 @@
 
     signupBtn.onclick = async () => {
       try {
-        await auth.createUserWithEmailAndPassword(emailInput.value, passwordInput.value);
+        await createUserWithEmailAndPassword(auth, emailInput.value, passwordInput.value);
         window.location = "home.html";
       } catch (err) {
         alert(err.message);
@@ -123,9 +134,9 @@
     };
 
     googleBtn.onclick = async () => {
-      const provider = new firebase.auth.GoogleAuthProvider();
+      const provider = new GoogleAuthProvider();
       try {
-        await auth.signInWithPopup(provider);
+        await signInWithPopup(auth, provider);
         window.location = "home.html";
       } catch (err) {
         alert(err.message);
