@@ -15,10 +15,16 @@ export default function Login() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
 
-  async function handleEmailAuth() {
-    if (!email || !password) return alert("Vul e-mail en wachtwoord in.");
+  async function handleEmailAuth(event) {
+    event.preventDefault();
+    if (!email || !password) {
+      setError("Vul e-mail en wachtwoord in.");
+      return;
+    }
+
     setLoading(true);
     setError("");
+
     try {
       if (isLogin) {
         await signInWithEmailAndPassword(auth, email, password);
@@ -76,36 +82,41 @@ export default function Login() {
             : "Maak een nieuw account aan als installateur."}
         </p>
 
-        <input
-          type="email"
-          placeholder="E-mail"
-          value={email}
-          onChange={(e) => setEmail(e.target.value)}
-          style={s.input}
-        />
-        <input
-          type="password"
-          placeholder="Wachtwoord"
-          value={password}
-          onChange={(e) => setPassword(e.target.value)}
-          style={s.input}
-        />
+        <form onSubmit={handleEmailAuth} style={{ width: "100%" }}>
+          <input
+            type="email"
+            placeholder="E-mail"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            style={s.input}
+            autoComplete="email"
+          />
+          <input
+            type="password"
+            placeholder="Wachtwoord"
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+            style={s.input}
+            autoComplete={isLogin ? "current-password" : "new-password"}
+          />
 
-        <button
-          className="btn btn-primary"
-          onClick={handleEmailAuth}
-          disabled={loading}
-          style={{ width: "100%" }}
-        >
-          {loading
-            ? "Bezig..."
-            : isLogin
-            ? "Inloggen"
-            : "Account aanmaken"}
-        </button>
+          <button
+            className="btn btn-primary"
+            type="submit"
+            disabled={loading}
+            style={{ width: "100%" }}
+          >
+            {loading
+              ? "Bezig..."
+              : isLogin
+              ? "Inloggen"
+              : "Account aanmaken"}
+          </button>
+        </form>
 
         <button
           className="btn"
+          type="button"
           onClick={handleGoogle}
           style={s.google}
           disabled={loading}
