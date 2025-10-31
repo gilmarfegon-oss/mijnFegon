@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+  <meta charset="UTF-8">
+  <title>MijnFegon Dashboard</title>
+  <link rel="stylesheet" href="styles/main.css">
+</head>
+<body>
+  <header>
+    <img src="img/logo.png" alt="MijnFegon" class="logo">
+    <h1>Welkom <span id="userName"></span></h1>
+  </header>
+
+  <nav class="sidebar">
+    <button class="menu-btn" data-page="dashboard">📊 Dashboard</button>
+    <button class="menu-btn" data-page="instellingen">⚙️ Instellingen</button>
+    <button class="menu-btn" data-page="webshop">🛒 Webshop</button>
+    <button id="logoutBtn">🚪 Uitloggen</button>
+  </nav>
+
+  <main id="content">
+    <!-- hier komt dynamische content -->
+  </main>
+
+  <script type="module">
+    import { checkAuth, logout } from "./scripts/auth.js";
+
+    checkAuth();
+
+    const content = document.getElementById("content");
+    const menuButtons = document.querySelectorAll(".menu-btn");
+
+    const pages = {
+      dashboard: `
+        <h2>📊 Dashboard</h2>
+        <ul>
+          <li><strong>Punten beschikbaar:</strong> 120</li>
+          <li><strong>Punten in afwachting:</strong> 30</li>
+          <li><strong>Aangemelde klanten:</strong> 14</li>
+        </ul>
+      `,
+      instellingen: `
+        <h2>⚙️ Instellingen</h2>
+        <form id="settingsForm">
+          <label>Bedrijfsnaam<br><input type="text" name="bedrijf" placeholder="Mijn Bedrijf BV"></label><br><br>
+          <label>Adres<br><input type="text" name="adres" placeholder="Straatnaam 123"></label><br><br>
+          <label>Email<br><input type="email" name="email" placeholder="email@voorbeeld.nl"></label><br><br>
+          <button type="submit">Opslaan</button>
+        </form>
+        <h3>Wachtwoord wijzigen</h3>
+        <button id="changePw">Stel nieuw wachtwoord in</button>
+      `,
+      webshop: `
+        <h2>🛒 Webshop (in ontwikkeling)</h2>
+        <p>Deze sectie wordt binnenkort toegevoegd.</p>
+      `
+    };
+
+    menuButtons.forEach(btn => {
+      btn.addEventListener("click", () => {
+        const page = btn.getAttribute("data-page");
+        content.innerHTML = pages[page];
+      });
+    });
+
+    document.getElementById("logoutBtn").addEventListener("click", logout);
+    content.innerHTML = pages.dashboard; // standaard openen
+  </script>
+</body>
+</html>
