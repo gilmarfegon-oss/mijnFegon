@@ -1,107 +1,70 @@
 <!DOCTYPE html>
 <html lang="nl">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta charset="UTF-8">
   <title>MijnFegon Dashboard</title>
-  <style>
-    body {
-      margin: 0;
-      font-family: system-ui, sans-serif;
-      background: #f4f4f8;
-      display: flex;
-      height: 100vh;
-    }
-    aside {
-      background: #0d47a1;
-      color: white;
-      width: 220px;
-      display: flex;
-      flex-direction: column;
-      padding: 1rem;
-    }
-    aside h2 {
-      text-align: center;
-    }
-    main {
-      flex: 1;
-      padding: 2rem;
-    }
-    button {
-      background: #0066ff;
-      color: white;
-      border: none;
-      border-radius: 6px;
-      padding: 0.6rem 1rem;
-      cursor: pointer;
-    }
-    button:hover {
-      background: #004dd1;
-    }
-    #loading {
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      height: 100vh;
-      width: 100%;
-      font-size: 1.2rem;
-      color: #333;
-    }
-  </style>
+  <link rel="stylesheet" href="styles/main.css">
 </head>
 <body>
-  <div id="loading">Even geduld... je sessie wordt geladen ⏳</div>
+  <header>
+    <img src="img/logo.png" alt="MijnFegon" class="logo">
+    <h1>Welkom <span id="userName"></span></h1>
+  </header>
 
-  <div id="app" style="display:none;">
-    <aside>
-      <h2>MijnFegon</h2>
-      <nav>
-        <button class="nav" data-page="dashboard">📊 Dashboard</button>
-        <button class="nav" data-page="instellingen">⚙️ Instellingen</button>
-        <button class="nav" data-page="webshop">🛒 Webshop</button>
-      </nav>
-      <button id="logoutBtn">🚪 Uitloggen</button>
-    </aside>
+  <nav class="sidebar">
+    <button class="menu-btn" data-page="dashboard">📊 Dashboard</button>
+    <button class="menu-btn" data-page="instellingen">⚙️ Instellingen</button>
+    <button class="menu-btn" data-page="webshop">🛒 Webshop</button>
+    <button id="logoutBtn">🚪 Uitloggen</button>
+  </nav>
 
-    <main>
-      <h1 id="pageTitle">Dashboard</h1>
-      <div id="pageContent">
-        <p>Welkom bij jouw persoonlijke omgeving, <span id="userName"></span>!</p>
-      </div>
-    </main>
-  </div>
+  <main id="content">
+    <!-- hier komt dynamische content -->
+  </main>
 
   <script type="module">
-    import { auth } from "./scripts/firebase-init.js";
-    import {
-      onAuthStateChanged,
-      signOut
-    } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-auth.js";
+    import { checkAuth, logout } from "./scripts/auth.js";
 
-    const loading = document.getElementById("loading");
-    const app = document.getElementById("app");
-    const userName = document.getElementById("userName");
-    const logoutBtn = document.getElementById("logoutBtn");
+    checkAuth();
 
-    onAuthStateChanged(auth, async (user) => {
-      await new Promise(r => setTimeout(r, 500));
+    const content = document.getElementById("content");
+    const menuButtons = document.querySelectorAll(".menu-btn");
 
-      if (!user) {
-        console.warn("Geen gebruiker – redirect naar login...");
-        setTimeout(() => (window.location = "index.html"), 1000);
-        return;
-      }
+    const pages = {
+      dashboard: `
+        <h2>📊 Dashboard</h2>
+        <ul>
+          <li><strong>Punten beschikbaar:</strong> 120</li>
+          <li><strong>Punten in afwachting:</strong> 30</li>
+          <li><strong>Aangemelde klanten:</strong> 14</li>
+        </ul>
+      `,
+      instellingen: `
+        <h2>⚙️ Instellingen</h2>
+        <form id="settingsForm">
+          <label>Bedrijfsnaam<br><input type="text" name="bedrijf" placeholder="Mijn Bedrijf BV"></label><br><br>
+          <label>Adres<br><input type="text" name="adres" placeholder="Straatnaam 123"></label><br><br>
+          <label>Email<br><input type="email" name="email" placeholder="email@voorbeeld.nl"></label><br><br>
+          <button type="submit">Opslaan</button>
+        </form>
+        <h3>Wachtwoord wijzigen</h3>
+        <button id="changePw">Stel nieuw wachtwoord in</button>
+      `,
+      webshop: `
+        <h2>🛒 Webshop (in ontwikkeling)</h2>
+        <p>Deze sectie wordt binnenkort toegevoegd.</p>
+      `
+    };
 
-      console.log("✅ Ingelogd als:", user.email);
-      loading.style.display = "none";
-      app.style.display = "flex";
-      userName.textContent = user.displayName || user.email;
+    menuButtons.forEach(btn => {
+      btn.addEventListener("click", () => {
+        const page = btn.getAttribute("data-page");
+        content.innerHTML = pages[page];
+      });
     });
 
-    logoutBtn.onclick = async () => {
-      await signOut(auth);
-      window.location = "index.html";
-    };
+    document.getElementById("logoutBtn").addEventListener("click", logout);
+    content.innerHTML = pages.dashboard; // standaard openen
   </script>
 </body>
 </html>
