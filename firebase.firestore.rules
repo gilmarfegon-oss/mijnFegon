@@ -1,0 +1,114 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function isAdmin() {
+      return isSignedIn() && request.auth.token.role == 'admin';
+    }
+
+    function isOwner(userId) {
+      return isSignedIn() && request.auth.uid == userId;
+    }
+
+    match /users/{userId} {
+      function allowedUserKeys() {
+        return [
+          'uid',
+          'email',
+          'role',
+          'createdAt',
+          'points_total',
+          'points_pending',
+          'profile_completed',
+          'installer_full_name',
+          'installer_company',
+          'installer_phone',
+          'installer_address',
+          'installer_kvk'
+        ];
+      }
+
+      function userEditableKeys() {
+        return [
+          'profile_completed',
+          'installer_full_name',
+          'installer_company',
+          'installer_phone',
+          'installer_address',
+          'installer_kvk'
+        ];
+      }
+
+      allow create: if isOwner(userId)
+        && request.resource.data.uid == request.auth.uid
+        && request.resource.data.role == 'user'
+        && request.resource.data.keys().hasOnly(allowedUserKeys());
+
+      allow read: if isOwner(userId) || isAdmin();
+
+      allow update: if isAdmin() || (
+        isOwner(userId)
+          && request.resource.data.uid == resource.data.uid
+          && request.resource.data.email == resource.data.email
+          && request.resource.data.role == resource.data.role
+          && request.resource.data.points_total == resource.data.points_total
+          && request.resource.data.points_pending == resource.data.points_pending
+          && request.resource.data.createdAt == resource.data.createdAt
+          && request.resource.data.keys().hasOnly(allowedUserKeys())
+          && resource.data.diff(request.resource.data).changedKeys().hasOnly(userEditableKeys())
+      );
+    }
+
+    match /registrations/{registrationId} {
+      allow create: if isSignedIn()
+        && request.resource.data.installer_uid == request.auth.uid
+        && request.resource.data.status == 'pending';
+
+      allow read: if isAdmin() || (isSignedIn() && resource.data.installer_uid == request.auth.uid);
+
+      allow update: if isAdmin();
+
+      allow delete: if false;
+    }
+
+    match /registraties/{registrationId} {
+      allow create, update, delete: if isAdmin();
+      allow read: if isAdmin();
+    }
+
+    match /punten/{userId} {
+      allow read: if isAdmin() || isOwner(userId);
+      allow write: if isAdmin();
+    }
+
+    match /shop/{productId} {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
+
+    match /purchases/{purchaseId} {
+      allow create: if isSignedIn()
+        && request.resource.data.user_uid == request.auth.uid;
+
+      allow read: if isAdmin() || (isSignedIn() && resource.data.user_uid == request.auth.uid);
+
+      allow update, delete: if isAdmin();
+    }
+
+    match /producten/{productId} {
+      allow create: if isSignedIn()
+        && request.resource.data.uid == request.auth.uid;
+
+      allow read: if isAdmin() || (isSignedIn() && resource.data.uid == request.auth.uid);
+
+      allow update, delete: if isAdmin() || (isSignedIn() && resource.data.uid == request.auth.uid);
+    }
+
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}
