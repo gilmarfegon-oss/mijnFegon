@@ -1,9 +1,10 @@
 import React, { useState, useEffect } from "react";
 import { db, auth } from "../firebase";
 import { doc, updateDoc, setDoc, getDoc } from "firebase/firestore";
+import AppShell from "../components/AppShell";
 import "../styles/theme.css";
 
-export default function Producten() {
+export default function Producten({ user, role }) {
   const [naam, setNaam] = useState("");
   const [punten, setPunten] = useState("");
   const [producten, setProducten] = useState([]);
@@ -46,41 +47,73 @@ export default function Producten() {
   }
 
   return (
-    <div className="container">
-      <div className="card">
-        <h2>📦 Mijn Producten</h2>
-        <form onSubmit={voegToe} className="grid" style={{ gap: "0.75rem" }}>
-          <input
-            placeholder="Productnaam"
-            value={naam}
-            onChange={(e) => setNaam(e.target.value)}
-          />
-          <input
-            placeholder="Punten"
-            type="number"
-            value={punten}
-            onChange={(e) => setPunten(e.target.value)}
-          />
-          <button className="btn btn-primary" type="submit">
+    <AppShell
+      user={user}
+      role={role}
+      title="Mijn producten"
+      kicker="Persoonlijke catalogus"
+      description="Bewaar veelgebruikte producten inclusief puntenwaardes en voeg ze eenvoudig toe aan nieuwe registraties."
+    >
+      <section className="card">
+        <div className="section-header">
+          <div>
+            <h2>Product toevoegen</h2>
+            <p className="text-muted">Leg je favoriete producten vast voor snelle registratie.</p>
+          </div>
+        </div>
+        <form onSubmit={voegToe} className="form-grid" style={{ gap: "1rem" }}>
+          <div className="form-row">
+            <div>
+              <label htmlFor="product-naam">Productnaam</label>
+              <input
+                id="product-naam"
+                placeholder="Productnaam"
+                value={naam}
+                onChange={(e) => setNaam(e.target.value)}
+                required
+              />
+            </div>
+            <div>
+              <label htmlFor="product-punten">Punten</label>
+              <input
+                id="product-punten"
+                placeholder="Punten"
+                type="number"
+                value={punten}
+                onChange={(e) => setPunten(e.target.value)}
+                required
+                min="0"
+              />
+            </div>
+          </div>
+          <button className="btn btn-primary" type="submit" style={{ justifySelf: "start" }}>
             Toevoegen
           </button>
         </form>
+      </section>
 
-        <ul>
-          {producten.map((p, index) => (
-            <li key={`${p.naam}-${index}`} style={{ margin: "0.5rem 0" }}>
-              {p.naam} — {p.punten} punten
-              <button
-                className="btn btn-danger"
-                style={{ marginLeft: "1rem" }}
-                onClick={() => verwijder(index)}
-              >
-                Verwijder
-              </button>
-            </li>
-          ))}
-        </ul>
-      </div>
-    </div>
+      <section className="card">
+        <div className="section-header">
+          <h2>Opgeslagen producten</h2>
+        </div>
+        {producten.length === 0 ? (
+          <div className="empty-state">Je hebt nog geen producten opgeslagen.</div>
+        ) : (
+          <div className="activity-list">
+            {producten.map((p, index) => (
+              <div key={`${p.naam}-${index}`} className="activity-item">
+                <div className="activity-item__meta">
+                  <span className="activity-item__title">{p.naam}</span>
+                  <span className="activity-item__subtitle">{p.punten} punten</span>
+                </div>
+                <button className="btn btn-danger" onClick={() => verwijder(index)}>
+                  Verwijderen
+                </button>
+              </div>
+            ))}
+          </div>
+        )}
+      </section>
+    </AppShell>
   );
 }

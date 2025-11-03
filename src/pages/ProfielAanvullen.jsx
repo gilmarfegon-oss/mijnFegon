@@ -86,51 +86,60 @@ export default function ProfielAanvullen({ user, onComplete }) {
 
   if (initialLoading) {
     return (
-      <div className="container center" style={{ minHeight: "100vh" }}>
-        ⏳ Gegevens laden...
+      <div className="auth-shell">
+        <div className="auth-card">⏳ Gegevens laden...</div>
       </div>
     );
   }
 
   return (
-    <div className="container">
-      <div className="card">
-        <h1>Welkom bij MijnFegon 👋</h1>
-        <p className="text-muted" style={{ marginBottom: "1rem" }}>
-          Vul onderstaande bedrijfsgegevens aan om toegang te krijgen tot het portaal.
-        </p>
+    <div className="auth-shell" style={{ background: "linear-gradient(135deg, #12295a 0%, #0f1f47 100%)" }}>
+      <div className="auth-card">
+        <div className="center">
+          <div className="app-shell__logo" style={{ margin: "0 auto 1rem" }}>
+            <span>F</span>
+          </div>
+          <h1>Welkom bij MijnFegon 👋</h1>
+          <p className="text-muted">
+            Vul je bedrijfsgegevens in zodat we je beloningen en communicatie goed kunnen afhandelen.
+          </p>
+        </div>
 
-        <form onSubmit={handleSubmit} className="grid" style={{ gap: "1rem" }}>
-          <input
-            type="text"
-            name="installer_full_name"
-            placeholder="Volledige naam"
-            value={form.installer_full_name}
-            onChange={handleChange}
-            required
-          />
-          <input
-            type="text"
-            name="installer_company"
-            placeholder="Bedrijfsnaam"
-            value={form.installer_company}
-            onChange={handleChange}
-            required
-          />
-          <input
-            type="text"
-            name="installer_phone"
-            placeholder="Telefoonnummer"
-            value={form.installer_phone}
-            onChange={handleChange}
-          />
-          <input
-            type="text"
-            name="installer_kvk"
-            placeholder="KvK-nummer (optioneel)"
-            value={form.installer_kvk}
-            onChange={handleChange}
-          />
+        <form onSubmit={handleSubmit} className="form-grid" style={{ gap: "1rem" }}>
+          <div className="form-row">
+            <input
+              type="text"
+              name="installer_full_name"
+              placeholder="Volledige naam"
+              value={form.installer_full_name}
+              onChange={handleChange}
+              required
+            />
+            <input
+              type="text"
+              name="installer_company"
+              placeholder="Bedrijfsnaam"
+              value={form.installer_company}
+              onChange={handleChange}
+              required
+            />
+          </div>
+          <div className="form-row">
+            <input
+              type="text"
+              name="installer_phone"
+              placeholder="Telefoonnummer"
+              value={form.installer_phone}
+              onChange={handleChange}
+            />
+            <input
+              type="text"
+              name="installer_kvk"
+              placeholder="KvK-nummer (optioneel)"
+              value={form.installer_kvk}
+              onChange={handleChange}
+            />
+          </div>
           <input
             type="text"
             name="installer_address"
@@ -143,18 +152,14 @@ export default function ProfielAanvullen({ user, onComplete }) {
             className="btn btn-primary"
             type="submit"
             disabled={loading}
-            style={{ marginTop: "1rem" }}
+            style={{ width: "100%" }}
           >
             {loading ? "Opslaan..." : "Opslaan en doorgaan"}
           </button>
         </form>
 
-        {success && (
-          <p style={{ color: "green", marginTop: "1rem" }}>
-            ✅ Gegevens opgeslagen! Je kunt nu verder naar het dashboard.
-          </p>
-        )}
-        {error && <p style={{ color: "red", marginTop: "1rem" }}>{error}</p>}
+        {success && <div className="alert alert-success">✅ Gegevens opgeslagen! Je kunt nu verder.</div>}
+        {error && <div className="alert alert-error">{error}</div>}
       </div>
     </div>
   );

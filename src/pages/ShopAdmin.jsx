@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { db, auth } from "../firebase";
+import { db } from "../firebase";
 import {
   collection,
   addDoc,
@@ -8,11 +8,10 @@ import {
   doc,
   onSnapshot,
 } from "firebase/firestore";
-import { Link } from "react-router-dom";
-import { signOut } from "firebase/auth";
+import AppShell from "../components/AppShell";
 import "../styles/theme.css";
 
-export default function ShopAdmin({ user }) {
+export default function ShopAdmin({ user, role }) {
   const [producten, setProducten] = useState([]);
   const [form, setForm] = useState({
     name: "",
@@ -34,8 +33,10 @@ export default function ShopAdmin({ user }) {
 
   async function handleSubmit(e) {
     e.preventDefault();
-    if (!form.name || !form.points)
-      return alert("Naam en punten zijn verplicht.");
+    if (!form.name || !form.points) {
+      alert("Naam en punten zijn verplicht.");
+      return;
+    }
     try {
       if (editId) {
         await updateDoc(doc(db, "shop", editId), {
@@ -77,52 +78,68 @@ export default function ShopAdmin({ user }) {
     }
   }
 
-  if (loading) return <div className="container center">⏳ Laden...</div>;
-
   return (
-    <div className="container">
-      <nav className="app-nav">
-        <Link to="/admin">← Adminpaneel</Link>
-        <Link to="/dashboard">Dashboard</Link>
-        <button
-          className="btn btn-danger"
-          onClick={() => signOut(auth)}
-          style={{ marginLeft: "auto" }}
-        >
-          Uitloggen
-        </button>
-      </nav>
-
-      <h1>🛒 Productbeheer</h1>
-      <p className="text-muted">Beheer de producten die zichtbaar zijn in de shop.</p>
-
-      <div className="card" style={{ marginBottom: "1.5rem" }}>
-        <form className="grid" style={{ gap: "1rem" }} onSubmit={handleSubmit}>
-          <input
-            placeholder="Naam"
-            value={form.name}
-            onChange={(e) => setForm({ ...form, name: e.target.value })}
-            required
-          />
-          <input
-            type="number"
-            placeholder="Punten"
-            value={form.points}
-            onChange={(e) => setForm({ ...form, points: Number(e.target.value) })}
-            required
-          />
-          <input
-            placeholder="Afbeeldings-URL (optioneel)"
-            value={form.image}
-            onChange={(e) => setForm({ ...form, image: e.target.value })}
-          />
-          <textarea
-            placeholder="Beschrijving (optioneel)"
-            value={form.description}
-            onChange={(e) => setForm({ ...form, description: e.target.value })}
-            rows={2}
-          />
-          <div style={{ display: "flex", gap: "0.75rem" }}>
+    <AppShell
+      user={user}
+      role={role}
+      title="Shopbeheer"
+      kicker="Beheer het aanbod"
+      description="Voeg nieuwe beloningen toe, werk bestaande producten bij of verwijder verouderde items uit de shop."
+    >
+      <section className="card">
+        <div className="section-header">
+          <div>
+            <h2>{editId ? "Product bewerken" : "Nieuw product"}</h2>
+            <p className="text-muted">
+              Vul de details in en sla op. Alle wijzigingen zijn direct zichtbaar voor installateurs.
+            </p>
+          </div>
+        </div>
+        <form onSubmit={handleSubmit} className="form-grid">
+          <div className="form-row">
+            <div>
+              <label htmlFor="name">Naam</label>
+              <input
+                id="name"
+                placeholder="Naam"
+                value={form.name}
+                onChange={(e) => setForm({ ...form, name: e.target.value })}
+                required
+              />
+            </div>
+            <div>
+              <label htmlFor="points">Punten</label>
+              <input
+                id="points"
+                type="number"
+                placeholder="Punten"
+                value={form.points}
+                onChange={(e) => setForm({ ...form, points: Number(e.target.value) })}
+                required
+                min="0"
+              />
+            </div>
+          </div>
+          <div>
+            <label htmlFor="image">Afbeeldings-URL</label>
+            <input
+              id="image"
+              placeholder="https://..."
+              value={form.image}
+              onChange={(e) => setForm({ ...form, image: e.target.value })}
+            />
+          </div>
+          <div>
+            <label htmlFor="description">Beschrijving</label>
+            <textarea
+              id="description"
+              placeholder="Beschrijving (optioneel)"
+              value={form.description}
+              onChange={(e) => setForm({ ...form, description: e.target.value })}
+              rows={3}
+            />
+          </div>
+          <div className="btn-group">
             <button className="btn btn-primary" type="submit">
               {editId ? "Bijwerken" : "Toevoegen"}
             </button>
@@ -140,49 +157,68 @@ export default function ShopAdmin({ user }) {
             )}
           </div>
         </form>
-      </div>
+      </section>
 
-      <table>
-        <thead>
-          <tr>
-            <th>Afbeelding</th>
-            <th>Naam</th>
-            <th>Punten</th>
-            <th>Beschrijving</th>
-            <th>Acties</th>
-          </tr>
-        </thead>
-        <tbody>
-          {producten.map((p) => (
-            <tr key={p.id}>
-              <td>
-                {p.image ? (
-                  <img
-                    src={p.image}
-                    alt={p.name}
-                    width="60"
-                    height="60"
-                    style={{ objectFit: "cover", borderRadius: 6 }}
-                  />
-                ) : (
-                  "—"
-                )}
-              </td>
-              <td>{p.name}</td>
-              <td>{p.points}</td>
-              <td>{p.description || "—"}</td>
-              <td style={{ whiteSpace: "nowrap" }}>
-                <button className="btn btn-secondary" onClick={() => startEdit(p)}>
-                  ✏️
-                </button>
-                <button className="btn btn-danger" onClick={() => handleDelete(p.id)}>
-                  🗑️
-                </button>
-              </td>
-            </tr>
-          ))}
-        </tbody>
-      </table>
-    </div>
+      <section className="card">
+        <div className="section-header">
+          <h2>Productoverzicht</h2>
+          <p className="text-muted">
+            Houd overzicht over alle producten en pas ze in één klik aan.
+          </p>
+        </div>
+
+        {loading ? (
+          <div className="empty-state">Producten laden...</div>
+        ) : producten.length === 0 ? (
+          <div className="empty-state">Er zijn nog geen producten toegevoegd.</div>
+        ) : (
+          <div className="table-card">
+            <table>
+              <thead>
+                <tr>
+                  <th>Afbeelding</th>
+                  <th>Naam</th>
+                  <th>Punten</th>
+                  <th>Beschrijving</th>
+                  <th>Acties</th>
+                </tr>
+              </thead>
+              <tbody>
+                {producten.map((p) => (
+                  <tr key={p.id}>
+                    <td>
+                      {p.image ? (
+                        <img
+                          src={p.image}
+                          alt={p.name}
+                          width="60"
+                          height="60"
+                          style={{ objectFit: "cover", borderRadius: 12 }}
+                        />
+                      ) : (
+                        "—"
+                      )}
+                    </td>
+                    <td>{p.name}</td>
+                    <td>{p.points}</td>
+                    <td style={{ maxWidth: 320 }}>{p.description || "—"}</td>
+                    <td>
+                      <div className="table-actions">
+                        <button className="btn btn-secondary" onClick={() => startEdit(p)}>
+                          Bewerken
+                        </button>
+                        <button className="btn btn-danger" onClick={() => handleDelete(p.id)}>
+                          Verwijderen
+                        </button>
+                      </div>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
+      </section>
+    </AppShell>
   );
 }

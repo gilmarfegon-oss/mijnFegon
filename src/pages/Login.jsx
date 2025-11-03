@@ -73,53 +73,49 @@ export default function Login() {
   }
 
   return (
-    <div className="container" style={s.wrapper}>
-      <div className="card" style={s.card}>
-        <h1 style={s.title}>{isLogin ? "Inloggen" : "Registreren"}</h1>
-        <p className="text-muted" style={{ marginBottom: "1rem" }}>
-          {isLogin
-            ? "Log in met je e-mail of Google-account."
-            : "Maak een nieuw account aan als installateur."}
-        </p>
+    <div className="auth-shell" style={{ background: "linear-gradient(120deg, #0f1f47 0%, #0052cc 100%)" }}>
+      <div className="auth-card">
+        <div className="center">
+          <div className="app-shell__logo" style={{ margin: "0 auto 1.25rem" }}>
+            <span>F</span>
+          </div>
+          <h1>{isLogin ? "Inloggen" : "Account aanmaken"}</h1>
+          <p className="text-muted" style={{ marginBottom: "1rem" }}>
+            {isLogin
+              ? "Log in met je e-mail of Google-account en ga direct aan de slag."
+              : "Maak een nieuw account aan als installateur en spaar punten."}
+          </p>
+        </div>
 
-        <form onSubmit={handleEmailAuth} style={{ width: "100%" }}>
+        <form onSubmit={handleEmailAuth} className="form-grid" style={{ gap: "1rem" }}>
           <input
             type="email"
             placeholder="E-mail"
             value={email}
             onChange={(e) => setEmail(e.target.value)}
-            style={s.input}
             autoComplete="email"
+            required
           />
           <input
             type="password"
             placeholder="Wachtwoord"
             value={password}
             onChange={(e) => setPassword(e.target.value)}
-            style={s.input}
             autoComplete={isLogin ? "current-password" : "new-password"}
+            required
           />
 
-          <button
-            className="btn btn-primary"
-            type="submit"
-            disabled={loading}
-            style={{ width: "100%" }}
-          >
-            {loading
-              ? "Bezig..."
-              : isLogin
-              ? "Inloggen"
-              : "Account aanmaken"}
+          <button className="btn btn-primary" type="submit" disabled={loading}>
+            {loading ? "Bezig..." : isLogin ? "Inloggen" : "Account aanmaken"}
           </button>
         </form>
 
         <button
-          className="btn"
+          className="btn btn-secondary"
           type="button"
           onClick={handleGoogle}
-          style={s.google}
           disabled={loading}
+          style={{ width: "100%" }}
         >
           <img
             src="https://developers.google.com/identity/images/g-logo.png"
@@ -130,52 +126,12 @@ export default function Login() {
           Inloggen met Google
         </button>
 
-        <p style={s.switch} onClick={() => setIsLogin(!isLogin)}>
-          {isLogin
-            ? "Nog geen account? Registreren"
-            : "Al een account? Log in"}
+        <p className="auth-switch" onClick={() => setIsLogin(!isLogin)}>
+          {isLogin ? "Nog geen account? Registreren" : "Al een account? Log in"}
         </p>
 
-        {error && <p style={s.error}>⚠️ {error}</p>}
+        {error && <p className="auth-error">⚠️ {error}</p>}
       </div>
     </div>
   );
 }
-
-const s = {
-  wrapper: {
-    display: "flex",
-    justifyContent: "center",
-    alignItems: "center",
-    minHeight: "100vh",
-  },
-  card: {
-    maxWidth: "380px",
-    textAlign: "center",
-  },
-  title: {
-    marginBottom: "1rem",
-    color: "#002b5c",
-  },
-  input: {
-    marginBottom: "0.8rem",
-  },
-  google: {
-    background: "#fff",
-    border: "1px solid #ddd",
-    color: "#444",
-    width: "100%",
-    marginTop: "0.6rem",
-    fontWeight: "600",
-  },
-  switch: {
-    marginTop: "1rem",
-    color: "#0066ff",
-    fontWeight: "600",
-    cursor: "pointer",
-  },
-  error: {
-    color: "red",
-    marginTop: "1rem",
-  },
-};

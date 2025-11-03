@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { db, auth } from "../firebase";
+import { db } from "../firebase";
 import {
   collection,
   doc,
@@ -7,11 +7,10 @@ import {
   runTransaction,
   serverTimestamp,
 } from "firebase/firestore";
-import { Link } from "react-router-dom";
-import { signOut } from "firebase/auth";
+import AppShell from "../components/AppShell";
 import "../styles/theme.css";
 
-export default function Shop({ user }) {
+export default function Shop({ user, role }) {
   const [producten, setProducten] = useState([]);
   const [saldo, setSaldo] = useState(0);
   const [loading, setLoading] = useState(true);
@@ -67,73 +66,83 @@ export default function Shop({ user }) {
     }
   }
 
-  if (loading) return <div className="container center">⏳ Laden...</div>;
-
   return (
-    <div className="container">
-      <nav className="app-nav">
-        <Link to="/dashboard">← Terug</Link>
-        <Link to="/instellingen">Instellingen</Link>
-        <button
-          className="btn btn-danger"
-          onClick={() => signOut(auth)}
-          style={{ marginLeft: "auto" }}
-        >
-          Uitloggen
-        </button>
-      </nav>
-
-      <h1>🛍️ Fegon Shop</h1>
-      <div className="card center" style={{ marginBottom: "1rem" }}>
-        <h2>Je saldo: {saldo} punten</h2>
-      </div>
+    <AppShell
+      user={user}
+      role={role}
+      title="MijnFegon Shop"
+      kicker="Verdien & verzilver"
+      description="Bestel beloningen met je verdiende punten. Je saldo werkt realtime bij na elke aankoop."
+    >
+      <section className="card">
+        <div className="section-header">
+          <div>
+            <h2>Puntensaldo</h2>
+            <p className="text-muted">
+              Je hebt op dit moment <strong>{saldo}</strong> punten beschikbaar.
+            </p>
+          </div>
+        </div>
+        <div className="stat-grid">
+          <article className="stat-card">
+            <h3>Beschikbaar saldo</h3>
+            <p className="stat-card__value">{saldo}</p>
+            <p className="stat-card__meta">Gebruik je punten direct voor een beloning</p>
+          </article>
+          <article className="stat-card">
+            <h3>Nieuwste producten</h3>
+            <p className="stat-card__value">{producten.length}</p>
+            <p className="stat-card__meta">In de shop beschikbaar</p>
+          </article>
+        </div>
+      </section>
 
       {msg && (
         <div
-          className={`alert ${
-            msg.startsWith("✅") ? "alert-success" : "alert-error"
-          }`}
-          style={{ marginBottom: "1rem" }}
+          className={`alert ${msg.startsWith("✅") ? "alert-success" : "alert-error"}`}
         >
           {msg}
         </div>
       )}
 
-      {producten.length === 0 ? (
-        <p>Er zijn nog geen producten beschikbaar.</p>
-      ) : (
-        <div className="grid grid-3">
-          {producten.map((p) => (
-            <div key={p.id} className="card center">
-              {p.image && (
-                <img
-                  src={p.image}
-                  alt={p.name}
-                  width="92"
-                  height="92"
-                  style={{
-                    objectFit: "cover",
-                    borderRadius: 8,
-                    marginBottom: 12,
-                  }}
-                />
-              )}
-              <h3>{p.name}</h3>
-              <p>{p.description}</p>
-              <p>
-                <strong>{p.points} punten</strong>
-              </p>
-              <button
-                className="btn btn-primary"
-                onClick={() => koopProduct(p)}
-                disabled={saldo < p.points}
-              >
-                {saldo < p.points ? "Te weinig punten" : "Koop product"}
-              </button>
-            </div>
-          ))}
+      <section className="card">
+        <div className="section-header">
+          <div>
+            <h2>Beschikbare beloningen</h2>
+            <p className="text-muted">
+              Kies uit het aanbod en wissel je punten direct in.
+            </p>
+          </div>
         </div>
-      )}
-    </div>
+
+        {loading ? (
+          <div className="empty-state">Producten laden...</div>
+        ) : producten.length === 0 ? (
+          <div className="empty-state">
+            Er zijn momenteel geen producten beschikbaar. Kom later nog eens terug.
+          </div>
+        ) : (
+          <div className="grid grid-3">
+            {producten.map((p) => (
+              <article key={p.id} className="card product-card">
+                {p.image && <img src={p.image} alt={p.name} />}
+                <h3 style={{ marginTop: 0 }}>{p.name}</h3>
+                <p className="product-description">
+                  {p.description || "Geen beschrijving beschikbaar."}
+                </p>
+                <p style={{ fontWeight: 700, fontSize: "1.05rem" }}>{p.points} punten</p>
+                <button
+                  className="btn btn-primary"
+                  onClick={() => koopProduct(p)}
+                  disabled={saldo < p.points}
+                >
+                  {saldo < p.points ? "Te weinig punten" : "Bestel"}
+                </button>
+              </article>
+            ))}
+          </div>
+        )}
+      </section>
+    </AppShell>
   );
 }
