@@ -5,6 +5,7 @@ import {
   doc,
   updateDoc,
   getDoc,
+  setDoc,
 } from "firebase/firestore";
 import { db, auth } from "../firebase";
 import { signOut } from "firebase/auth";
@@ -28,6 +29,15 @@ export default function RegistratiesAdmin({ user }) {
 
   async function handleApprove(id, reg) {
     try {
+      const puntenRef = doc(db, "punten", reg.installer_uid);
+      const puntenSnap = await getDoc(puntenRef);
+      const huidigeSaldo = puntenSnap.exists()
+        ? puntenSnap.data().totaal || 0
+        : 0;
+      const nieuweSaldo = huidigeSaldo + (reg.points || 0);
+
+      await setDoc(puntenRef, { totaal: nieuweSaldo }, { merge: true });
+
       const userRef = doc(db, "users", reg.installer_uid);
       const uSnap = await getDoc(userRef);
       if (uSnap.exists()) {

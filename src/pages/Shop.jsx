@@ -4,7 +4,7 @@ import {
   collection,
   doc,
   onSnapshot,
-  runTransaction
+  runTransaction,
   serverTimestamp,
 } from "firebase/firestore";
 import { Link } from "react-router-dom";
