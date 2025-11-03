@@ -1,5 +1,5 @@
 import React, { useCallback, useEffect, useState } from "react";
-import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
+import { HashRouter, Routes, Route, Navigate } from "react-router-dom";
 import { onAuthStateChanged } from "firebase/auth";
 import { doc, getDoc } from "firebase/firestore";
 import { auth, db } from "./firebase";
@@ -70,7 +70,7 @@ function App() {
   }
 
   return (
-    <BrowserRouter>
+    <HashRouter>
       <Routes>
         <Route
           path="/"
@@ -90,7 +90,10 @@ function App() {
           path="/profiel"
           element={
             <ProtectedRoute requireProfile={false}>
-              <ProfielAanvullen user={user} onComplete={() => loadUserData(user.uid)} />
+              <ProfielAanvullen
+                user={user}
+                onComplete={() => loadUserData(user.uid)}
+              />
             </ProtectedRoute>
           }
         />
@@ -108,7 +111,7 @@ function App() {
           path="/instellingen"
           element={
             <ProtectedRoute>
-              <Instellingen user={user} />
+              <Instellingen user={user} role={userRole} />
             </ProtectedRoute>
           }
         />
@@ -117,7 +120,7 @@ function App() {
           path="/registratie"
           element={
             <ProtectedRoute>
-              <RegistratieFormulier user={user} />
+              <RegistratieFormulier user={user} role={userRole} />
             </ProtectedRoute>
           }
         />
@@ -126,7 +129,7 @@ function App() {
           path="/shop"
           element={
             <ProtectedRoute>
-              <Shop user={user} />
+              <Shop user={user} role={userRole} />
             </ProtectedRoute>
           }
         />
@@ -135,7 +138,7 @@ function App() {
           path="/shop-admin"
           element={
             <ProtectedRoute roles={["admin"]}>
-              <ShopAdmin user={user} />
+              <ShopAdmin user={user} role={userRole} />
             </ProtectedRoute>
           }
         />
@@ -144,7 +147,7 @@ function App() {
           path="/registraties-admin"
           element={
             <ProtectedRoute roles={["admin"]}>
-              <RegistratiesAdmin user={user} />
+              <RegistratiesAdmin user={user} role={userRole} />
             </ProtectedRoute>
           }
         />
@@ -153,7 +156,7 @@ function App() {
           path="/admin"
           element={
             <ProtectedRoute roles={["admin"]}>
-              <Admin user={user} />
+              <Admin user={user} role={userRole} />
             </ProtectedRoute>
           }
         />
@@ -162,7 +165,7 @@ function App() {
           path="/producten"
           element={
             <ProtectedRoute>
-              <Producten />
+              <Producten user={user} role={userRole} />
             </ProtectedRoute>
           }
         />
@@ -172,7 +175,7 @@ function App() {
           element={<Navigate to={user ? "/dashboard" : "/"} replace />}
         />
       </Routes>
-    </BrowserRouter>
+    </HashRouter>
   );
 }
 

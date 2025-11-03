@@ -1,11 +1,10 @@
 import React, { useEffect, useState } from "react";
-import { auth, db } from "../firebase";
+import { db } from "../firebase";
 import { doc, getDoc, updateDoc } from "firebase/firestore";
-import { signOut } from "firebase/auth";
-import { Link } from "react-router-dom";
+import AppShell from "../components/AppShell";
 import "../styles/theme.css";
 
-export default function Instellingen({ user }) {
+export default function Instellingen({ user, role }) {
   const [data, setData] = useState({});
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -45,86 +44,101 @@ export default function Instellingen({ user }) {
     }
   }
 
-  if (loading)
-    return (
-      <div className="container center">
-        ⏳ Instellingen laden...
-      </div>
-    );
-
   return (
-    <div className="container">
-      <nav className="app-nav">
-        <Link to="/dashboard">← Terug</Link>
-        <Link to="/registratie">Nieuw apparaat</Link>
-        <button
-          onClick={() => signOut(auth)}
-          className="btn btn-danger"
-          style={{ marginLeft: "auto" }}
-        >
-          Uitloggen
-        </button>
-      </nav>
+    <AppShell
+      user={user}
+      role={role}
+      title="Instellingen"
+      kicker="Jouw profiel"
+      description="Werk eenvoudig je contact- en bedrijfsgegevens bij. Deze informatie wordt gebruikt voor communicatie over registraties en shopbestellingen."
+    >
+      {loading ? (
+        <div className="empty-state">Instellingen laden...</div>
+      ) : (
+        <section className="card">
+          <div className="section-header">
+            <div>
+              <h2>Profielgegevens</h2>
+              <p className="text-muted">
+                Pas je gegevens aan en sla op om je profiel up-to-date te houden.
+              </p>
+            </div>
+          </div>
 
-      <div className="card">
-        <h1>⚙️ Instellingen</h1>
-        <p className="text-muted">
-          Pas hier je bedrijfs- en contactgegevens aan. Wijzigingen worden direct opgeslagen in je profiel.
-        </p>
+          <form onSubmit={handleSave} className="form-grid" style={{ gap: "1.5rem" }}>
+            <div className="form-row">
+              <div>
+                <label htmlFor="installer_full_name">Volledige naam</label>
+                <input
+                  id="installer_full_name"
+                  type="text"
+                  name="installer_full_name"
+                  value={data.installer_full_name || ""}
+                  onChange={handleChange}
+                />
+              </div>
+              <div>
+                <label htmlFor="installer_company">Bedrijfsnaam</label>
+                <input
+                  id="installer_company"
+                  type="text"
+                  name="installer_company"
+                  value={data.installer_company || ""}
+                  onChange={handleChange}
+                />
+              </div>
+            </div>
 
-        <form onSubmit={handleSave} className="grid" style={{ gap: "1rem" }}>
-          <input
-            type="text"
-            name="installer_full_name"
-            placeholder="Volledige naam"
-            value={data.installer_full_name || ""}
-            onChange={handleChange}
-          />
-          <input
-            type="text"
-            name="installer_company"
-            placeholder="Bedrijfsnaam"
-            value={data.installer_company || ""}
-            onChange={handleChange}
-          />
-          <input
-            type="text"
-            name="installer_phone"
-            placeholder="Telefoonnummer"
-            value={data.installer_phone || ""}
-            onChange={handleChange}
-          />
-          <input
-            type="text"
-            name="installer_address"
-            placeholder="Adres"
-            value={data.installer_address || ""}
-            onChange={handleChange}
-          />
-          <input
-            type="text"
-            name="installer_kvk"
-            placeholder="KvK-nummer"
-            value={data.installer_kvk || ""}
-            onChange={handleChange}
-          />
+            <div className="form-row">
+              <div>
+                <label htmlFor="installer_phone">Telefoonnummer</label>
+                <input
+                  id="installer_phone"
+                  type="text"
+                  name="installer_phone"
+                  value={data.installer_phone || ""}
+                  onChange={handleChange}
+                />
+              </div>
+              <div>
+                <label htmlFor="installer_address">Adres</label>
+                <input
+                  id="installer_address"
+                  type="text"
+                  name="installer_address"
+                  value={data.installer_address || ""}
+                  onChange={handleChange}
+                />
+              </div>
+            </div>
 
-          <button
-            className="btn btn-primary"
-            type="submit"
-            disabled={saving}
-            style={{ marginTop: "1rem" }}
-          >
-            {saving ? "Opslaan..." : "Opslaan"}
-          </button>
-        </form>
+            <div className="form-row">
+              <div>
+                <label htmlFor="installer_kvk">KvK-nummer</label>
+                <input
+                  id="installer_kvk"
+                  type="text"
+                  name="installer_kvk"
+                  value={data.installer_kvk || ""}
+                  onChange={handleChange}
+                />
+              </div>
+            </div>
 
-        {success && (
-          <p style={{ color: "green", marginTop: "1rem" }}>
-            ✅ Gegevens succesvol opgeslagen!
-          </p>
-        )}
-      </div>
-    </div>
+            <div className="btn-group">
+              <button className="btn btn-primary" type="submit" disabled={saving}>
+                {saving ? "Opslaan..." : "Wijzigingen opslaan"}
+              </button>
+            </div>
+          </form>
+
+          {success && (
+            <div className="alert alert-success" style={{ marginTop: "1.5rem" }}>
+              ✅ Gegevens succesvol opgeslagen!
+            </div>
+          )}
+        </section>
+      )}
+    </AppShell>
   );
 }

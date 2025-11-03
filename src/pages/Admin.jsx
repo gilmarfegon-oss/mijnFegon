@@ -1,42 +1,47 @@
-import React, { useEffect, useState } from "react";
-import { db, auth } from "../firebase";
+import React, { useEffect, useMemo, useState } from "react";
+import { db } from "../firebase";
 import {
   collection,
-  getDocs,
   getDoc,
   updateDoc,
   doc,
   onSnapshot,
   setDoc,
 } from "firebase/firestore";
-import { signOut } from "firebase/auth";
-import { Link } from "react-router-dom";
 import * as XLSX from "xlsx";
+import AppShell from "../components/AppShell";
 import "../styles/theme.css";
 
-export default function Admin({ user }) {
+export default function Admin({ user, role }) {
   const [users, setUsers] = useState([]);
   const [registraties, setRegistraties] = useState([]);
   const [search, setSearch] = useState("");
   const [loading, setLoading] = useState(true);
+
   useEffect(() => {
     const unsubUsers = onSnapshot(collection(db, "users"), (snap) => {
       setUsers(snap.docs.map((d) => ({ id: d.id, ...d.data() })));
+      setLoading(false);
     });
 
     const unsubRegs = onSnapshot(collection(db, "registrations"), (snap) => {
       setRegistraties(snap.docs.map((d) => ({ id: d.id, ...d.data() })));
+      setLoading(false);
     });
 
-    setLoading(false);
     return () => {
       unsubUsers();
       unsubRegs();
     };
   }, []);
 
-  const filteredUsers = users.filter((u) =>
-    u.email?.toLowerCase().includes(search.toLowerCase())
+  const filteredUsers = useMemo(
+    () =>
+      users.filter((u) =>
+        u.email?.toLowerCase().includes(search.toLowerCase()) ||
+        u.installer_full_name?.toLowerCase().includes(search.toLowerCase())
+      ),
+    [users, search]
   );
 
   const handleExportUsers = () => {
@@ -56,7 +61,8 @@ export default function Admin({ user }) {
   };
 
   const handleImportUsers = (e) => {
-    const file = e.target.files[0];
+    const file = e.target.files?.[0];
+    if (!file) return;
     const reader = new FileReader();
     reader.onload = async (evt) => {
       const data = new Uint8Array(evt.target.result);
@@ -89,7 +95,7 @@ export default function Admin({ user }) {
       id: r.id,
       installateur: r.installer_email || "",
       klant: r.klantNaam || "",
-      product: r.productType || "",
+      product: r.productType || r.productMerk || "",
       status: r.status || "pending",
       punten: r.points || 0,
     }));
@@ -100,7 +106,8 @@ export default function Admin({ user }) {
   };
 
   const handleImportRegistraties = (e) => {
-    const file = e.target.files[0];
+    const file = e.target.files?.[0];
+    if (!file) return;
     const reader = new FileReader();
     reader.onload = async (evt) => {
       const data = new Uint8Array(evt.target.result);
@@ -128,11 +135,8 @@ export default function Admin({ user }) {
 
   const wijzigPunten = async (uid, delta) => {
     const ref = doc(db, "punten", uid);
-    const snap = await getDocs(collection(db, "punten"));
-    let huidige = 0;
-    snap.forEach((s) => {
-      if (s.id === uid) huidige = s.data().totaal || 0;
-    });
+    const snap = await getDoc(ref);
+    const huidige = snap.exists() ? snap.data().totaal || 0 : 0;
     await setDoc(ref, { totaal: huidige + delta }, { merge: true });
   };
 
@@ -161,184 +165,163 @@ export default function Admin({ user }) {
     }
   };
 
-  if (loading)
-    return <p style={{ padding: 20 }}>⏳ Gegevens laden...</p>;
-
   return (
-    <div style={styles.container}>
-      <header style={styles.header}>
-        <div>
-          <h1>🧑‍💼 Adminpaneel</h1>
-          <p>
-            Ingelogd als <strong>{user.email}</strong>
-          </p>
-        </div>
-        <div style={{ display: "flex", gap: "0.75rem", alignItems: "center" }}>
-          <Link to="/registraties-admin" className="btn btn-secondary">
-            Registraties beheren
-          </Link>
-          <button onClick={() => signOut(auth)} style={styles.logout}>
-            Uitloggen
-          </button>
-        </div>
-      </header>
+    <AppShell
+      user={user}
+      role={role}
+      title="Adminpaneel"
+      kicker="Organiseer & beheer"
+      description="Beheer gebruikersaccounts, exporteer rapportages en houd toezicht op alle binnengekomen registraties."
+    >
+      {loading && <div className="alert alert-success">Gegevens laden...</div>}
 
-      <section style={styles.toolbar}>
-        <input
-          type="text"
-          placeholder="Zoek gebruiker..."
-          value={search}
-          onChange={(e) => setSearch(e.target.value)}
-          style={styles.search}
-        />
-        <div>
-          <button onClick={handleExportUsers} style={styles.btn}>
-            ⬇️ Export Users
-          </button>
-          <label style={styles.importLabel}>
-            📤 Import Users
-            <input type="file" onChange={handleImportUsers} hidden />
-          </label>
-          <button onClick={handleExportRegistraties} style={styles.btn}>
-            ⬇️ Export Registraties
-          </button>
-          <label style={styles.importLabel}>
-            📤 Import Registraties
-            <input type="file" onChange={handleImportRegistraties} hidden />
-          </label>
+      <section className="card">
+        <div className="section-header">
+          <div>
+            <h2>Gebruikersbeheer</h2>
+            <p className="text-muted">
+              Zoek op naam of e-mail, exporteer de lijst of voer wijzigingen door in puntensaldi.
+            </p>
+          </div>
+          <div className="btn-group">
+            <button onClick={handleExportUsers} className="btn btn-outline" type="button">
+              ⬇️ Exporteren
+            </button>
+            <label className="btn btn-secondary file-input">
+              📤 Importeren
+              <input type="file" onChange={handleImportUsers} />
+            </label>
+          </div>
+        </div>
+
+        <div className="section-header" style={{ marginBottom: "1.25rem" }}>
+          <input
+            type="text"
+            placeholder="Zoek op naam of e-mail"
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            className="search-input"
+          />
+        </div>
+
+        <div className="table-card">
+          <table>
+            <thead>
+              <tr>
+                <th>Email</th>
+                <th>Naam</th>
+                <th>Rol</th>
+                <th>Punten</th>
+                <th>Acties</th>
+              </tr>
+            </thead>
+            <tbody>
+              {filteredUsers.length === 0 ? (
+                <tr>
+                  <td colSpan="5" className="center text-muted">
+                    Geen gebruikers gevonden.
+                  </td>
+                </tr>
+              ) : (
+                filteredUsers.map((u) => (
+                  <tr key={u.id}>
+                    <td>{u.email}</td>
+                    <td>{u.installer_full_name || "-"}</td>
+                    <td>{u.role || "user"}</td>
+                    <td>{u.points_total || 0}</td>
+                    <td>
+                      <div className="table-actions">
+                        <button onClick={() => wijzigPunten(u.id, 10)} className="btn btn-secondary">
+                          +10
+                        </button>
+                        <button onClick={() => wijzigPunten(u.id, -10)} className="btn btn-danger">
+                          -10
+                        </button>
+                      </div>
+                    </td>
+                  </tr>
+                ))
+              )}
+            </tbody>
+          </table>
         </div>
       </section>
 
-      <h2>👥 Gebruikers</h2>
-      <table style={styles.table}>
-        <thead>
-          <tr>
-            <th>Email</th>
-            <th>Rol</th>
-            <th>Punten</th>
-            <th>Acties</th>
-          </tr>
-        </thead>
-        <tbody>
-          {filteredUsers.map((u) => (
-            <tr key={u.id}>
-              <td>{u.email}</td>
-              <td>{u.role}</td>
-              <td>{u.points_total || 0}</td>
-              <td>
-                <button onClick={() => wijzigPunten(u.id, 10)}>+10</button>
-                <button onClick={() => wijzigPunten(u.id, -10)}>-10</button>
-              </td>
-            </tr>
-          ))}
-        </tbody>
-      </table>
+      <section className="card">
+        <div className="section-header">
+          <div>
+            <h2>Registraties overzicht</h2>
+            <p className="text-muted">
+              Exporteer of wijzig de status van registraties rechtstreeks vanuit dit overzicht.
+            </p>
+          </div>
+          <div className="btn-group">
+            <button onClick={handleExportRegistraties} className="btn btn-outline" type="button">
+              ⬇️ Exporteren
+            </button>
+            <label className="btn btn-secondary file-input">
+              📤 Importeren
+              <input type="file" onChange={handleImportRegistraties} />
+            </label>
+          </div>
+        </div>
 
-      <h2>🧾 Registraties</h2>
-      <table style={styles.table}>
-        <thead>
-          <tr>
-            <th>Installateur</th>
-            <th>Klant</th>
-            <th>Product</th>
-            <th>Status</th>
-            <th>Punten</th>
-            <th>Actie</th>
-          </tr>
-        </thead>
-        <tbody>
-          {registraties.map((r) => (
-            <tr key={r.id}>
-              <td>{r.installer_email}</td>
-              <td>{r.klantNaam}</td>
-              <td>{r.productType}</td>
-              <td>{r.status}</td>
-              <td>{r.points}</td>
-              <td>
-                <button onClick={() => updateStatus(r.id, "approved")}>✅</button>
-                <button
-                  onClick={() =>
-                    updateStatus(
-                      r.id,
-                      "rejected",
-                      prompt("Reden van afkeuring:") || "Afgekeurd"
-                    )
-                  }
-                >
-                  ❌
-                </button>
-              </td>
-            </tr>
-          ))}
-        </tbody>
-      </table>
-    </div>
+        <div className="table-card">
+          <table>
+            <thead>
+              <tr>
+                <th>Installateur</th>
+                <th>Klant</th>
+                <th>Product</th>
+                <th>Status</th>
+                <th>Punten</th>
+                <th>Actie</th>
+              </tr>
+            </thead>
+            <tbody>
+              {registraties.length === 0 ? (
+                <tr>
+                  <td colSpan="6" className="center text-muted">
+                    Geen registraties gevonden.
+                  </td>
+                </tr>
+              ) : (
+                registraties.map((r) => (
+                  <tr key={r.id}>
+                    <td>{r.installer_email}</td>
+                    <td>{r.klantNaam}</td>
+                    <td>{r.productType || r.productMerk}</td>
+                    <td>{r.status}</td>
+                    <td>{r.points}</td>
+                    <td>
+                      <div className="table-actions">
+                        <button
+                          className="btn btn-success"
+                          onClick={() => updateStatus(r.id, "approved")}
+                        >
+                          Goedkeuren
+                        </button>
+                        <button
+                          className="btn btn-danger"
+                          onClick={() =>
+                            updateStatus(
+                              r.id,
+                              "rejected",
+                              prompt("Reden van afkeuring:") || "Afgekeurd"
+                            )
+                          }
+                        >
+                          Afkeuren
+                        </button>
+                      </div>
+                    </td>
+                  </tr>
+                ))
+              )}
+            </tbody>
+          </table>
+        </div>
+      </section>
+    </AppShell>
   );
 }
-
-const styles = {
-  container: {
-    fontFamily: "system-ui, sans-serif",
-    padding: "2rem",
-    background: "#f4f6fb",
-    minHeight: "100vh",
-  },
-  header: {
-    display: "flex",
-    justifyContent: "space-between",
-    alignItems: "center",
-    background: "white",
-    padding: "1rem 1.5rem",
-    borderRadius: 12,
-    boxShadow: "0 2px 8px rgba(0,0,0,0.1)",
-    marginBottom: "2rem",
-  },
-  toolbar: {
-    display: "flex",
-    justifyContent: "space-between",
-    marginBottom: "1rem",
-    flexWrap: "wrap",
-    gap: "1rem",
-  },
-  search: {
-    padding: "0.6rem",
-    borderRadius: 8,
-    border: "1px solid #ccc",
-    width: "200px",
-  },
-  btn: {
-    background: "#0066ff",
-    color: "#fff",
-    border: "none",
-    borderRadius: 8,
-    padding: "0.5rem 0.8rem",
-    margin: "0 0.3rem",
-    cursor: "pointer",
-  },
-  importLabel: {
-    background: "#fff",
-    color: "#0066ff",
-    border: "2px solid #0066ff",
-    borderRadius: 8,
-    padding: "0.5rem 0.8rem",
-    marginLeft: "0.5rem",
-    cursor: "pointer",
-  },
-  table: {
-    width: "100%",
-    borderCollapse: "collapse",
-    background: "#fff",
-    borderRadius: 10,
-    overflow: "hidden",
-    boxShadow: "0 2px 6px rgba(0,0,0,0.05)",
-    marginBottom: "2rem",
-  },
-  logout: {
-    background: "#ff4d4f",
-    color: "white",
-    border: "none",
-    borderRadius: 6,
-    padding: "0.5rem 1rem",
-    cursor: "pointer",
-  },
-};
